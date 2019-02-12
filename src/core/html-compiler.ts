@@ -1,5 +1,6 @@
 import { HyperScript, h } from "./h";
 import { _Element } from "./element";
+import { checkTemplateFirstChildExist, checkTemplateText } from "../robust";
 
 type TemplateCreator = (h: HyperScript, $_h: string[]) => _Element;
 type NodeAttributes = NodeAttribute[];
@@ -15,7 +16,7 @@ interface ElementNode extends ChildNode {
   attributes?: NodeAttributes;
 }
 
-const enum Node {
+export const enum Node {
   Element = 1,
   Text = 3
 }
@@ -38,6 +39,9 @@ function build(statics: TemplateStringsArray): TemplateCreator {
   let str = defineTemplateVariable(statics);
 
   TEMPLATE.innerHTML = str;
+
+  // check error
+  checkTemplateText(TEMPLATE);
 
   return Function(
     "h",
