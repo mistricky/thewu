@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "strict": true,
-    "target": "es5",
+    "target": "es6",
     "lib": ["dom", "es2015", "esnext"],
     "module": "commonjs",
     "rootDir": "src",
