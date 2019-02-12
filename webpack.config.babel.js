@@ -10,7 +10,13 @@ export default {
   },
   mode: "development",
   module: {
-    rules: [{ test: /\.ts/, use: ["babel-loader", "ts-loader"] }]
+    rules: [
+      {
+        test: /\.ts/,
+        use: ["babel-loader", "ts-loader"],
+        exclude: /node_modules/
+      }
+    ]
   },
   resolve: {
     extensions: [".ts", ".js", ".json"]
