@@ -1,6 +1,6 @@
 import { HyperScript, h } from "./h";
 import { _Element } from "./element";
-import { checkTemplateFirstChildExist, checkTemplateText } from "../robust";
+import { checkTemplateText } from "../robust";
 
 type TemplateCreator = (h: HyperScript, $_h: string[]) => _Element;
 type NodeAttributes = NodeAttribute[];
