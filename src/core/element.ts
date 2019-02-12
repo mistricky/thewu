@@ -29,19 +29,10 @@ export class Ele {
     };
   }
 
-  constructor({ tagName, attrs, children }: _Element) {
-    this.el = {
-      tagName,
-      attrs,
-      children
-    };
+  constructor(el: _Element) {
+    this.el = el;
     this.renderer = new Renderer();
-  }
-
-  render(): Ele {
     this.domEle = this.renderer.render(this.el);
-
-    return this;
   }
 
   bindDOM(dom: Element | null) {
