@@ -9,6 +9,17 @@ import { compile } from "./core/html-compiler";
 
 let name = "hello world";
 
-let input = compile`<div></div>`;
+let items = new Array(3).fill(0).map((item, index) => `<li>${index++}</li>`);
 
-let ul = new Ele(input).bindDOM(document.querySelector("#root"));
+let input = compile`
+  <div>
+    <ul>
+      <li>${name}</li>
+    </ul>
+    ${name}
+  </div>
+`;
+
+console.info(input);
+
+new Ele(input).bindDOM(document.querySelector("#root"));
