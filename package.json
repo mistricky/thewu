@@ -1,0 +1,20 @@
+{
+  "name": "flat",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "7",
+    "babel-preset-env": "^1.7.0",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.3.1",
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.1",
+    "webpack-dev-server": "^3.1.14"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.21",
+    "babel-preset-react": "^6.24.1"
+  }
+}
