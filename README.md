@@ -1,6 +1,6 @@
 # Flat
 
-A lightweight MVVM framework base on hook.
+A lightweight MVVM framework base on TypeScript.
 
 dev...
 
@@ -36,6 +36,7 @@ export class Greeter {
 ```
 
 TODO：
+
 - [ ] 对于自定义组件的求值策略
 - [ ] 组件钩子的调用时机以及确定钩子函数
 - [ ] @FlatComponent 实现
