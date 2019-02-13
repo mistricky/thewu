@@ -80,7 +80,7 @@ function walk(node: ElementNode | null): string {
   let start = "{";
   let end = "}";
 
-  processAttributes(node, start);
+  start = processAttributes(node, start);
 
   // process children
   let returnValue = `h(${tagName},${start}${end}`;
