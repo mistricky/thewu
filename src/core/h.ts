@@ -6,14 +6,14 @@ export type HyperScript = (
   ...children: ElementChildren
 ) => _Element;
 
-export function h(
+export default function Flat(
   tagName: string,
-  attrs: Attrs = {},
+  attrs: Attrs,
   ...children: ElementChildren
 ): _Element {
   return {
     tagName,
-    attrs,
+    attrs: attrs || {},
     children
   };
 }
