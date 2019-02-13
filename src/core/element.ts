@@ -4,10 +4,15 @@ export interface Attrs {
   [index: string]: string;
 }
 
-export type ElementChildren = (_Element | string)[];
+export interface Component {
+  render(): _Element;
+}
+
+export type FlatComponentConstructor = new (...args: unknown[]) => Component;
+export type ElementChildren = (_Element | string | (_Element | string)[])[];
 
 export interface _Element {
-  tagName: string;
+  tagName: string | Function | FlatComponentConstructor;
   attrs: Attrs;
   children: ElementChildren;
 }
@@ -15,7 +20,6 @@ export interface _Element {
 export class Ele {
   private el: _Element;
   private renderer: Renderer;
-  private domEle: Element | undefined;
 
   static ele(
     tagName: string,
@@ -29,19 +33,15 @@ export class Ele {
     };
   }
 
-  constructor(el: _Element) {
-    this.el = el;
+  constructor(el: unknown) {
+    this.el = el as _Element;
     this.renderer = new Renderer();
-    this.domEle = this.renderer.render(this.el);
+    this.renderer.render(this.el);
   }
 
   bindDOM(dom: Element | null) {
     if (!dom) throw new Error("Cannot find element");
 
-    this.renderer.bindDOM(dom, this.domEle);
-  }
-
-  getDOMEle(): Element | undefined {
-    return this.domEle;
+    this.renderer.bindDOM(dom);
   }
 }

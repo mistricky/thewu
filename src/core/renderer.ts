@@ -1,35 +1,63 @@
-import { _Element } from "./element";
+import { _Element, ElementChildren, FlatComponentConstructor } from "./element";
+import { typeOf } from "../utils";
+import { DATA_TYPE } from "./data-types";
 
 export class Renderer {
-  render(originEle: _Element): Element {
-    let { tagName, attrs, children } = originEle;
-    let el = document.createElement(tagName);
+  private tpl: HTMLTemplateElement = document.createElement("template");
 
-    for (let attrName of Object.keys(attrs)) {
-      el.setAttribute(attrName, attrs[attrName]);
+  private flat(children: ElementChildren): ElementChildren {
+    let flatChildren: ElementChildren = [].concat(...(children as any));
+
+    flatChildren.map(child =>
+      typeOf(child) === DATA_TYPE.OBJECT
+        ? this.flat((child as _Element).children)
+        : child
+    );
+
+    return flatChildren;
+  }
+
+  private parseVDom(originEle: _Element): Element {
+    let { tagName, attrs, children } = originEle;
+
+    if (typeOf(tagName) === DATA_TYPE.FUNCTION) {
+      return this.parseVDom(
+        new (tagName as FlatComponentConstructor)().render()
+      );
     }
 
-    for (let child of children) {
-      let childEle: Text | Element | undefined;
+    let el = document.createElement(tagName as string);
 
-      if (typeof child === "string") {
-        childEle = document.createTextNode(child);
-      } else {
-        childEle = this.render(child);
+    if (attrs) {
+      for (let attrName of Object.keys(attrs)) {
+        el.setAttribute(attrName, attrs[attrName]);
       }
+    }
 
-      el.appendChild(childEle);
+    if (children) {
+      for (let child of children) {
+        let childEle: Text | Element | null | undefined;
+
+        if (typeof child !== "object") {
+          childEle = document.createTextNode(child);
+        } else {
+          childEle = this.parseVDom(child as _Element);
+        }
+
+        el.appendChild(childEle);
+      }
     }
 
     return el;
   }
 
-  bindDOM(dom: Element, originDOMELe: Element | undefined) {
-    if (!originDOMELe) {
-      throw new Error("originDOMEle is not Define!");
-    }
+  render(originEle: _Element) {
+    originEle.children = this.flat(originEle.children);
+    this.tpl.content.appendChild(this.parseVDom(originEle));
+  }
 
+  bindDOM(dom: Element) {
     dom.innerHTML = "";
-    dom.appendChild(originDOMELe);
+    dom.appendChild(document.importNode(this.tpl.content, true));
   }
 }
