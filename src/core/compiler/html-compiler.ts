@@ -1,7 +1,7 @@
-import { HyperScript, h } from "./h";
-import { _Element } from "./element";
-import { checkTemplateText } from "../robust";
-import { typeOf } from "../utils";
+import Flat, { HyperScript } from "../h";
+import { _Element } from "../element";
+import { checkTemplateText } from "../../robust";
+import { typeOf } from "../../utils";
 
 type TemplateCreator = (h: HyperScript, $_h: string[]) => _Element;
 type NodeAttributes = NodeAttribute[];
@@ -43,7 +43,7 @@ export function compile(
   let key = statics.join();
   const tpl = CACHE.get(key) || CACHE.set(key, build(strStatics)).get(key)!;
 
-  return tpl(h, flatInterpolations);
+  return tpl(Flat, flatInterpolations);
 }
 
 function build(statics: string[]): TemplateCreator {
@@ -61,6 +61,7 @@ function build(statics: string[]): TemplateCreator {
   ) as TemplateCreator;
 }
 
+// The walk will return hyperscript
 function walk(node: ElementNode | null): string {
   if (
     (node && node.nodeType !== Node.Element && node.nodeType !== Node.Text) ||
