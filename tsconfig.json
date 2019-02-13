@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
     "strict": true,
-    "target": "es6",
+    "target": "esnext",
     "lib": ["dom", "es2015", "esnext"],
     "module": "commonjs",
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "jsx": "react",
+    "esModuleInterop": true,
+    "jsxFactory": "Flat"
   },
-  "include": ["./src/**/*.ts"],
+  "include": ["src"],
   "exclude": ["node_modules"]
 }
