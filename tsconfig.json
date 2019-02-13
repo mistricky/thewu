@@ -8,7 +8,9 @@
     "outDir": "dist",
     "jsx": "react",
     "esModuleInterop": true,
-    "jsxFactory": "Flat"
+    "jsxFactory": "Flat",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["src"],
   "exclude": ["node_modules"]
