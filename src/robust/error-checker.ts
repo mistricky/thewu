@@ -1,4 +1,4 @@
-import { Node } from "../core/html-compiler";
+import { Node } from "../core/compiler/html-compiler";
 import { getErrorMsg } from "./error-messages";
 import {
   TEMPLATE_CANNOT_BE_TEXT,
