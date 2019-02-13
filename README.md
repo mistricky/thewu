@@ -1,3 +1,11 @@
+<div>
+  <p align="center"><img src="https://github.com/flat-dev-ti/Flat/blob/master/doc/logo.png" alt="fre logo" width="180"></p>
+  <h1 align="center" style="font-size:100px;">Flat</h1>
+</div>
+<p align="center">A lightweight MVVM framework base on TypeScript.</p>
+<p align="center">
+</p>
+
 # Flat
 
 A lightweight MVVM framework base on TypeScript.
