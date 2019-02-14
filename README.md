@@ -18,7 +18,7 @@ dev...
 
 ## About Decorator
 
-TypeScript 的 Decorator 不能支持改变类型，于是将原来的 FlatComponent 装饰器推掉，使用类 React 的继承 FlatComponent 来完成对类型的改变。
+TypeScript 的 Decorator 不能支持改变类型，这样只有使用类 React 的继承 FlatComponent 来完成对类型的约束，使 Decorator 不能专注的完成一件事情，在用户看来，除了使用 Decorator 还要做额外的工作是在太麻烦了，于是将原来的 FlatComponent 装饰器推掉。
 
 ## String Template Compiler
 
