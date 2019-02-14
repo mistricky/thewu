@@ -8,6 +8,7 @@
     "outDir": "dist",
     "jsx": "react",
     "esModuleInterop": true,
+    "declaration": true,
     "jsxFactory": "Flat",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
