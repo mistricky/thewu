@@ -1,29 +1,64 @@
-import { _Element, ElementChildren, FlatComponentConstructor } from "./element";
+import {
+  _Element,
+  ElementChildren,
+  FlatComponentConstructor,
+  Attrs
+} from "./element";
 import { typeOf } from "../utils";
 import { DATA_TYPE } from "./data-types";
+import { PROP_KEY, CHILDREN_KEY } from "./decorators";
 
 export class Renderer {
   private tpl: HTMLTemplateElement = document.createElement("template");
 
-  private flat(children: ElementChildren): ElementChildren {
-    let flatChildren: ElementChildren = [].concat(...(children as any));
+  private injectProperty(
+    component: FlatComponentConstructor,
+    metadataKey: Symbol,
+    property: Attrs | ElementChildren,
+    isIterable: boolean = true
+  ) {
+    let data = Reflect.getMetadata(metadataKey, component.prototype);
 
-    flatChildren.map(child =>
-      typeOf(child) === DATA_TYPE.OBJECT
-        ? this.flat((child as _Element).children)
-        : child
-    );
+    if (!data) return component;
 
-    return flatChildren;
+    return class extends component {
+      constructor() {
+        super();
+
+        let self: { [index: string]: unknown } = this;
+
+        if (isIterable) {
+          for (let prop of data) {
+            self[prop] = (property as Attrs)[prop];
+          }
+        } else {
+          self[data] = property;
+        }
+      }
+    };
+  }
+
+  private injectChildren(
+    component: FlatComponentConstructor,
+    children: ElementChildren
+  ) {
+    return this.injectProperty(component, CHILDREN_KEY, children, false);
+  }
+
+  private injectProps(component: FlatComponentConstructor, attrs: Attrs) {
+    return this.injectProperty(component, PROP_KEY, attrs);
   }
 
   private parseVDom(originEle: _Element): Element {
     let { tagName, attrs, children } = originEle;
 
     if (typeOf(tagName) === DATA_TYPE.FUNCTION) {
-      return this.parseVDom(
-        new (tagName as FlatComponentConstructor)().render()
-      );
+      let component = tagName as FlatComponentConstructor;
+
+      component = this.injectProps(component, attrs);
+      component = this.injectChildren(component, children);
+
+      return this.parseVDom(new component().render());
     }
 
     let el = document.createElement(tagName as string);
@@ -35,7 +70,8 @@ export class Renderer {
     }
 
     if (children) {
-      for (let child of children) {
+      // 把数组压到扁平，提升性能
+      for (let child of [].concat(...(children as any))) {
         let childEle: Text | Element | null | undefined;
 
         if (typeof child !== "object") {
@@ -52,7 +88,6 @@ export class Renderer {
   }
 
   render(originEle: _Element) {
-    originEle.children = this.flat(originEle.children);
     this.tpl.content.appendChild(this.parseVDom(originEle));
   }
 
