@@ -8,7 +8,10 @@ export interface Component {
   render(): _Element;
 }
 
-export type FlatComponentConstructor = new (...args: unknown[]) => Component;
+export interface FlatComponentConstructor {
+  new (...args: unknown[]): Component;
+  [index: string]: unknown;
+}
 export type ElementChildren = (_Element | string | (_Element | string)[])[];
 
 export interface _Element {
