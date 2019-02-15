@@ -1,4 +1,6 @@
 import { Renderer } from "./renderer";
+import { SystemHooks } from "./life-circle";
+import { Copy } from "../utils";
 
 export interface Attrs {
   [index: string]: string;
@@ -9,7 +11,7 @@ export interface LifeCircleHook {
   componentDidMount(): void;
 }
 
-export interface Component extends LifeCircleHook {
+export interface Component extends LifeCircleHook, SystemHooks {
   render(): _Element;
 }
 
@@ -20,12 +22,12 @@ export interface FlatComponentConstructor {
 export type ElementChildren = (_Element | string | (_Element | string)[])[];
 
 export interface _Element {
-  tagName: string | Function | FlatComponentConstructor;
+  tagName: string | Function | FlatComponentConstructor | Component;
   attrs: Attrs;
   children: ElementChildren;
 }
 
-export class Ele {
+export class FlatElement {
   private el: _Element;
   private renderer: Renderer;
 
@@ -42,7 +44,7 @@ export class Ele {
   }
 
   constructor(el: unknown) {
-    this.el = el as _Element;
+    this.el = Copy(el as _Element);
     this.renderer = new Renderer();
     this.renderer.render(this.el);
   }
