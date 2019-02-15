@@ -19,5 +19,9 @@ declare global {
     interface ElementAttributesProperty {
       props: unknown;
     }
+
+    interface ElementChildrenAttribute {
+      children: {};
+    }
   }
 }
