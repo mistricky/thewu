@@ -2,8 +2,6 @@ export * from "./core";
 export * from "./robust";
 export * from "./utils";
 
-import "./index";
-
 declare global {
   namespace JSX {
     interface Element {}
