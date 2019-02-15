@@ -4,7 +4,12 @@ export interface Attrs {
   [index: string]: string;
 }
 
-export interface Component {
+export interface LifeCircleHook {
+  componentWillMount(): void;
+  componentDidMount(): void;
+}
+
+export interface Component extends LifeCircleHook {
   render(): _Element;
 }
 
