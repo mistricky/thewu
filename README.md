@@ -16,6 +16,12 @@ dev...
 
 在执行 render 的时候，会将所有的数组抽成扁平，flat 会认为，children 就只有 Text 节点和 \_Elememt 节点，相对来说，抽成扁平，在性能上也会得到提升。
 
+为了能精确定位到更新的元素，在 Component 的原型上附加了类型为 symbol 的 \_key，用来唯一标识一个组件，flat renderer 把 render 分为三个阶段:
+
+1. 解析成最原始的 vdom
+2. 把 vdom 接着解析，遇到类和函数组件就生成实例（这个阶段不调用钩子）
+3. 接着，把第二阶段储存的实例拿出来调用 render，并调用组件的生命周期钩子
+
 ## About Decorator
 
 TypeScript 的 Decorator 不能支持改变类型，这样只有使用类 React 的继承 FlatComponent 来完成对类型的约束，使 Decorator 不能专注的完成一件事情，在用户看来，除了使用 Decorator 还要做额外的工作是在太麻烦了，于是将原来的 FlatComponent 装饰器推掉。
