@@ -4,6 +4,7 @@
 </div>
 <p align="center">A lightweight MVVM framework base on TypeScript.</p>
 <p align="center">
+  <img src="https://img.shields.io/github/license/flat-dev-ti/Flat.svg?style=flat-square">
 </p>
 
 # Flat
