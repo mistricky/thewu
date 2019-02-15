@@ -7,6 +7,7 @@ import {
 import { typeOf } from "../utils";
 import { DATA_TYPE } from "./data-types";
 import { PROP_KEY, CHILDREN_KEY } from "./decorators";
+import { processLifeCircle } from "./life-circle";
 
 export class Renderer {
   private tpl: HTMLTemplateElement = document.createElement("template");
@@ -58,7 +59,7 @@ export class Renderer {
       component = this.injectProps(component, attrs);
       component = this.injectChildren(component, children);
 
-      return this.parseVDom(new component().render());
+      return this.parseVDom(processLifeCircle(component));
     }
 
     let el = document.createElement(tagName as string);
@@ -70,7 +71,7 @@ export class Renderer {
     }
 
     if (children) {
-      // 把数组压到扁平，提升性能
+      // 把数组抽到扁平，提升性能
       for (let child of [].concat(...(children as any))) {
         let childEle: Text | Element | null | undefined;
 
