@@ -8,11 +8,17 @@ import {
 import { typeOf, Copy } from "../utils";
 import { DATA_TYPE } from "./data-types";
 import { PROP_KEY, CHILDREN_KEY, STATE_KEY } from "./decorators";
-import { processLifeCircle } from "./life-circle";
 
 export interface UnknownIndex {
   [index: string]: unknown;
 }
+
+export interface VdomNode extends _Element {
+  // ele: HTMLElement;
+  instance?: Component;
+}
+
+export type Vdom = VdomNode;
 
 // export interface WalkListener {}
 
@@ -20,30 +26,9 @@ export class Renderer {
   private tpl: HTMLTemplateElement = document.createElement("template");
   private unParseVdom: _Element | undefined;
   private instanceVdom: _Element | undefined;
-  private vdom: _Element | undefined;
+  private vdom: Vdom | undefined;
 
   private dom: any;
-
-  // private walk(vdom: _Element) {}
-
-  private parseVdomMountInstance(unParseVdom: _Element) {
-    let { tagName, children, attrs } = unParseVdom;
-    let Component = tagName as FlatComponentConstructor;
-
-    if (typeOf(Component) === DATA_TYPE.FUNCTION) {
-      Component = this.injectProps(Component, attrs);
-      Component = this.injectChildren(Component, children);
-      Component = this.parseStateToReactive(Component);
-      unParseVdom.tagName = new (Component as FlatComponentConstructor)();
-    }
-
-    children &&
-      unParseVdom.children.map(child =>
-        this.parseVdomMountInstance(child as _Element)
-      );
-
-    return unParseVdom;
-  }
 
   private updateRender(ele: _Element, node: Component): _Element {
     let { tagName: component } = ele;
@@ -73,22 +58,50 @@ export class Renderer {
     this.flush(this.dom, this.parseVDomToElement(parsedVdom));
   }
 
-  private execRender(instanceEle: _Element): _Element {
-    let { tagName, children } = instanceEle;
-
-    if (typeOf(tagName) === DATA_TYPE.OBJECT) {
-      let component = tagName as Component;
-
-      return this.execRender(processLifeCircle(component));
-    }
-
-    instanceEle.children = children.map(child =>
+  private execChildren(children: ElementChildren): ElementChildren {
+    return children.map(child =>
       typeOf(child) === DATA_TYPE.OBJECT
         ? this.execRender(child as _Element)
         : child
     );
+  }
 
-    return instanceEle;
+  private execRender(node: _Element): VdomNode {
+    let { tagName, children, attrs } = node;
+    let vdomNode: VdomNode = {
+      tagName,
+      attrs,
+      children
+    };
+
+    if (
+      typeOf(tagName) === DATA_TYPE.OBJECT ||
+      typeOf(tagName) === DATA_TYPE.FUNCTION
+    ) {
+      let component = tagName as FlatComponentConstructor;
+
+      component = this.injectProps(component, attrs);
+      component = this.injectChildren(component, children);
+      component = this.parseStateToReactive(component);
+
+      let instance = new component();
+
+      instance.componentWillMount();
+      vdomNode = {
+        ...instance.render()
+      };
+      vdomNode.instance = instance;
+
+      vdomNode.children = this.execChildren(vdomNode.children);
+      instance.componentDidMount();
+      instance._sysDidMount();
+
+      return vdomNode;
+    }
+
+    vdomNode.children = this.execChildren(vdomNode.children);
+
+    return vdomNode;
   }
 
   private injectProperty(
@@ -138,7 +151,7 @@ export class Renderer {
         set(target: UnknownIndex, prop: string | number, value: any) {
           // 防止重复渲染
           // 过滤掉 state
-          if (target.isPropertyInit && isState(prop)) {
+          if (isState(prop)) {
             // immutable
             let oldStates = target["$states"] as UnknownIndex;
             let newStates = Object.assign({}, oldStates, {
@@ -147,8 +160,9 @@ export class Renderer {
 
             target["$states"] = newStates;
 
-            self.update(target as Component);
-            return true;
+            if (target.isPropertyInit) {
+              self.update(target as Component);
+            }
           }
 
           return Reflect.set(target, prop, value);
@@ -222,8 +236,7 @@ export class Renderer {
 
   render(originEle: _Element) {
     this.unParseVdom = Copy(originEle);
-    this.instanceVdom = this.parseVdomMountInstance(Copy(this.unParseVdom));
-    this.vdom = this.execRender(Copy(this.instanceVdom));
+    this.vdom = this.execRender(Copy(this.unParseVdom));
     this.tpl.content.appendChild(this.parseVDomToElement(this.vdom));
   }
 
