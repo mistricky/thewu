@@ -68,7 +68,6 @@ export class Renderer {
     }
 
     let parsedVdom = this.updateRender(vdom, node);
-    console.info(parsedVdom);
 
     this.flush(this.dom, this.parseVDomToElement(parsedVdom));
   }
