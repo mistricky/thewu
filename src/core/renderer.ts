@@ -25,35 +25,50 @@ export type Vdom = VdomNode;
 export class Renderer {
   private tpl: HTMLTemplateElement = document.createElement("template");
   private unParseVdom: _Element | undefined;
-  private instanceVdom: _Element | undefined;
   private vdom: Vdom | undefined;
 
   private dom: any;
 
-  private updateRender(ele: _Element, node: Component): _Element {
-    let { tagName: component } = ele;
+  private updateRender(vdomNode: VdomNode, node: Component): VdomNode {
+    let { instance, children } = vdomNode;
 
-    if ((component as FlatComponentConstructor)._key === node._key) {
-      ele = this.execRender(ele);
-    } else {
-      ele.children &&
-        (ele.children = ele.children.map(child =>
-          this.updateRender(child as _Element, node)
-        ));
+    if (instance && instance._key === node._key) {
+      // vdomNode = this.execRender(vdomNode);
+      let subComponents: unknown[] = [];
+
+      for (let child of children) {
+        if (typeOf(child) === DATA_TYPE.OBJECT) {
+          subComponents.push(child);
+        }
+      }
+
+      vdomNode = { ...vdomNode, ...instance.render() };
+      let count = 0;
+      let newChildren = vdomNode.children.map(child =>
+        typeOf(child) === DATA_TYPE.OBJECT ? subComponents[count++] : child
+      );
+
+      vdomNode.children = newChildren as ElementChildren;
     }
 
-    return ele;
+    vdomNode.children &&
+      (vdomNode.children = vdomNode.children.map(child =>
+        this.updateRender(child as VdomNode, node)
+      ));
+
+    return vdomNode;
   }
 
   // effect function
   private update(node: Component) {
-    let vdom = Copy(this.instanceVdom);
+    let vdom = { ...this.vdom } as VdomNode;
 
     if (!vdom) {
       return;
     }
 
     let parsedVdom = this.updateRender(vdom, node);
+    console.info(parsedVdom);
 
     this.flush(this.dom, this.parseVDomToElement(parsedVdom));
   }
