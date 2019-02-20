@@ -18,11 +18,11 @@ dev...
 
 在执行 render 的时候，会将所有的数组抽成扁平，flat 会认为，children 就只有 Text 节点和 \_Elememt 节点，相对来说，抽成扁平，在性能上也会得到提升。
 
-为了能精确定位到更新的元素，在 Component 的原型上附加了类型为 symbol 的 \_key，用来唯一标识一个组件，flat renderer 把 render 分为三个阶段:
+为了能精确定位到更新的元素，在 Component 的原型上附加了类型为 symbol 的 \_key，用来唯一标识一个组件
 
-1. 解析成最原始的 vdom
-2. 把 vdom 接着解析，遇到类和函数组件就生成实例（这个阶段不调用钩子）
-3. 接着，把第二阶段储存的实例拿出来调用 render，并调用组件的生命周期钩子
+不必关心节点的 key, flat 在初次解析的时候，附加了 component 的 key，key 用了 Symbol 类型，为了保证对比的是同一个 key，于是把 key 附在了组件上。
+
+为直接定位更改的元素，flat 采用了`ES6`的 `Proxy/ Reflect`，因为已经知道了渲染的元素的位置，变更的组件的子组件并不会重新调用 render，大幅度提高了渲染的性能
 
 ## About Decorator
 
