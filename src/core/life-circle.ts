@@ -3,10 +3,10 @@
 // import { FlatComponentConstructor, _Element, Component } from "./element";
 // import { Vdom } from "./renderer";
 
-// export interface SystemHooks {
-//   _sysDidMount(): void;
-//   _key: symbol;
-// }
+export interface SystemHooks {
+  _sysDidMount(): void;
+  _key: symbol;
+}
 
 // /** 只负责调用生命周期钩子 */
 // export function processLifeCircle(
