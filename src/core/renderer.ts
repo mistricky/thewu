@@ -26,8 +26,7 @@ export class Renderer {
   private tpl: HTMLTemplateElement = document.createElement("template");
   private unParseVdom: _Element | undefined;
   private vdom: Vdom | undefined;
-
-  private dom: any;
+  private dom: Element | undefined;
 
   private updateRender(vdomNode: VdomNode, node: Component): VdomNode {
     let { instance, children } = vdomNode;
@@ -69,7 +68,7 @@ export class Renderer {
 
     let parsedVdom = this.updateRender(vdom, node);
 
-    this.flush(this.dom, this.parseVDomToElement(parsedVdom));
+    this.flush(this.dom!, this.parseVDomToElement(parsedVdom));
   }
 
   private execChildren(children: ElementChildren): ElementChildren {
