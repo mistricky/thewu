@@ -20,11 +20,13 @@ export interface FlatComponentConstructor {
   new (...args: unknown[]): Component;
   [index: string]: unknown;
 }
-export type ElementChildren = (
+
+export type ElementChild =
   | _Element
   | Component
   | string
-  | (_Element | string)[])[];
+  | (_Element | string)[];
+export type ElementChildren = ElementChild[];
 
 export interface _Element {
   tagName: string | Function | FlatComponentConstructor | Component;
