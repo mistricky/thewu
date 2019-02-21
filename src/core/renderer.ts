@@ -3,11 +3,13 @@ import {
   ElementChildren,
   FlatComponentConstructor,
   Attrs,
-  Component
+  Component,
+  ElementChild
 } from "./element";
 import { typeOf, Copy } from "../utils";
 import { DATA_TYPE } from "./data-types";
 import { PROP_KEY, CHILDREN_KEY, STATE_KEY } from "./decorators";
+import { RenderQueue } from "./render-queue";
 
 export interface UnknownIndex {
   [index: string]: unknown;
@@ -27,46 +29,84 @@ export class Renderer {
   private unParseVdom: _Element | undefined;
   private vdom: Vdom | undefined;
   private dom: Element | undefined;
+  private renderQueue = new RenderQueue();
 
-  private updateRender(vdomNode: VdomNode, node: Component): VdomNode {
+  private isPropsChange(oldAttrs: Attrs, newAttrs: Attrs): boolean {
+    for (let attr of Object.keys(newAttrs)) {
+      if (oldAttrs[attr] !== newAttrs[attr]) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private updateRender(vdomNode: VdomNode): VdomNode {
     let { instance, children } = vdomNode;
 
-    if (instance && instance._key === node._key) {
-      // vdomNode = this.execRender(vdomNode);
-      let subComponents: unknown[] = [];
+    if (instance && this.renderQueue.keys.includes(instance._key)) {
+      let subComponents: VdomNode[] = [];
+      this.renderQueue.removeKey(instance._key);
 
       for (let child of children) {
-        if (typeOf(child) === DATA_TYPE.OBJECT) {
-          subComponents.push(child);
+        if (
+          typeOf(child) === DATA_TYPE.OBJECT &&
+          (child as Component).instance
+        ) {
+          subComponents.push(child as VdomNode);
         }
       }
 
       vdomNode = { ...vdomNode, ...instance.render() };
       let count = 0;
-      let newChildren = vdomNode.children.map(child =>
-        typeOf(child) === DATA_TYPE.OBJECT ? subComponents[count++] : child
-      );
+      let newChildren = vdomNode.children.map(child => {
+        if (
+          typeOf(child) === DATA_TYPE.OBJECT &&
+          typeOf((child as Component).tagName) === DATA_TYPE.FUNCTION
+        ) {
+          let subComponent = subComponents[count++];
+          let attrs = (child as VdomNode).attrs;
+
+          // 对比新旧 vdom 节点的 attr
+          if (
+            subComponent.instance &&
+            this.isPropsChange(subComponent.attrs, attrs)
+          ) {
+            subComponent.attrs = attrs;
+            this.renderQueue.addKey(subComponent.instance._key);
+
+            for (let attr of Object.keys(attrs)) {
+              subComponent.instance[attr] = attrs[attr];
+            }
+          }
+
+          return subComponent;
+        } else {
+          return child;
+        }
+      });
 
       vdomNode.children = newChildren as ElementChildren;
+      console.info(vdomNode);
     }
 
     vdomNode.children &&
       (vdomNode.children = vdomNode.children.map(child =>
-        this.updateRender(child as VdomNode, node)
+        this.updateRender(child as VdomNode)
       ));
 
     return vdomNode;
   }
 
   // effect function
-  private update(node: Component) {
+  private update() {
     let vdom = { ...this.vdom } as VdomNode;
 
     if (!vdom) {
       return;
     }
 
-    let parsedVdom = this.updateRender(vdom, node);
+    let parsedVdom = this.updateRender(vdom);
 
     this.flush(this.dom!, this.parseVDomToElement(parsedVdom));
   }
@@ -77,6 +117,18 @@ export class Renderer {
         ? this.execRender(child as _Element)
         : child
     );
+  }
+
+  private injectData(
+    component: FlatComponentConstructor,
+    attrs: Attrs,
+    children: ElementChildren
+  ): FlatComponentConstructor {
+    component = this.injectProps(component, attrs);
+    component = this.injectChildren(component, children);
+    component = this.parseStateToReactive(component);
+
+    return component;
   }
 
   private execRender(node: _Element): VdomNode {
@@ -93,9 +145,7 @@ export class Renderer {
     ) {
       let component = tagName as FlatComponentConstructor;
 
-      component = this.injectProps(component, attrs);
-      component = this.injectChildren(component, children);
-      component = this.parseStateToReactive(component);
+      component = this.injectData(component, attrs, children);
 
       let instance = new component();
 
@@ -161,12 +211,12 @@ export class Renderer {
 
       let self = this;
       prototype = new Proxy(prototype as object, {
-        set(target: UnknownIndex, prop: string | number, value: any) {
+        set(target: Component, prop: string | number, value: any) {
           // 防止重复渲染
           // 过滤掉 state
           if (isState(prop)) {
             // immutable
-            let oldStates = target["$states"] as UnknownIndex;
+            let oldStates = target["$states"];
             let newStates = Object.assign({}, oldStates, {
               [prop]: value
             });
@@ -174,7 +224,9 @@ export class Renderer {
             target["$states"] = newStates;
 
             if (target.isPropertyInit) {
-              self.update(target as Component);
+              // push in render queue
+              self.renderQueue.addKey(target._key);
+              self.update();
             }
           }
 
