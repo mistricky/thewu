@@ -13,13 +13,18 @@ export interface LifeCircleHook {
 
 export interface Component extends LifeCircleHook, SystemHooks {
   render(): _Element;
+  [index: string]: unknown;
 }
 
 export interface FlatComponentConstructor {
   new (...args: unknown[]): Component;
   [index: string]: unknown;
 }
-export type ElementChildren = (_Element | string | (_Element | string)[])[];
+export type ElementChildren = (
+  | _Element
+  | Component
+  | string
+  | (_Element | string)[])[];
 
 export interface _Element {
   tagName: string | Function | FlatComponentConstructor | Component;
