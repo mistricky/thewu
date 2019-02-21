@@ -87,7 +87,6 @@ export class Renderer {
       });
 
       vdomNode.children = newChildren as ElementChildren;
-      console.info(vdomNode);
     }
 
     vdomNode.children &&
