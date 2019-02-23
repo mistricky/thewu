@@ -66,6 +66,9 @@ export class Renderer {
   }
 
   private updateRender(vdomNode: VdomNode): VdomNode {
+    // if (subComponent.instance) {
+    //   console.info(this.childrenTable.get(subComponent.instance._key));
+    // }
     let { instance, children } = vdomNode;
 
     if (instance && this.renderQueue.keys.includes(instance._key)) {
@@ -217,14 +220,13 @@ export class Renderer {
         super();
 
         let self: UnknownIndex = this;
+        let properties = property as StateType;
 
         if (!property) {
           return;
         }
 
         if (isIterable) {
-          let properties = property as StateType;
-
           for (let prop of data) {
             if (
               typeOf(properties[prop]) === DATA_TYPE.ARRAY ||
@@ -232,6 +234,7 @@ export class Renderer {
             ) {
               let arr = properties[prop] as any;
               // 为了能在运行时获取到数组的名称
+              console.info(prop);
               arr._key = self._key;
               arr.runtimeName = prop;
               arr.belong = self;
@@ -243,7 +246,7 @@ export class Renderer {
             self[prop] = properties[prop];
           }
         } else {
-          self[data] = [].concat(...(property as any));
+          self[data] = properties[0];
         }
       }
     };
@@ -266,9 +269,11 @@ export class Renderer {
           prop: string | number,
           value: any
         ) => {
-          // 防止重复渲染
-          // 过滤掉 state
-          if (isState(prop) || isState(target.runtimeName)) {
+          /**
+           * TODO: runtimeName 其实是一种很脏的做法
+           * 过滤掉 state， 防止重复渲染
+           */
+          if (isState(prop) || target.runtimeName) {
             // immutable
             let oldStates = target["$states"];
             let newStates = Object.assign({}, oldStates, {
@@ -279,12 +284,16 @@ export class Renderer {
           }
 
           Reflect.set(target, prop, value);
+          // console.info(
+          //   isState(target.runtimeName),
+          //   isState(prop),
+          //   target.isPropertyInit
+          // );
 
-          if (
-            isState(target.runtimeName) ||
-            (isState(prop) && target.isPropertyInit)
-          ) {
-            if (isState(target.runtimeName)) {
+          console.info(data);
+
+          if (target.runtimeName || (isState(prop) && target.isPropertyInit)) {
+            if (target.runtimeName) {
               target.belong[target.runtimeName][prop] = value;
             }
 
