@@ -6,6 +6,10 @@ export interface Attrs {
   [index: string]: string;
 }
 
+export interface StateType {
+  [index: string]: any;
+}
+
 export interface LifeCircleHook {
   componentWillMount(): void;
   componentDidMount(): void;
