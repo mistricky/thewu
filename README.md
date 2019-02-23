@@ -28,6 +28,68 @@ dev...
 
 TypeScript 的 Decorator 不能支持改变类型，这样只有使用类 React 的继承 FlatComponent 来完成对类型的约束，使 Decorator 不能专注的完成一件事情，在用户看来，除了使用 Decorator 还要做额外的工作是在太麻烦了，于是将原来的 FlatComponent 装饰器推掉。
 
+## State && Props
+
+值得一提的是，`flat` 为避免重复 `渲染` 做了处理， 在 `flat` 里你不必担心不必要的 `渲染`。
+
+### State
+
+`flat` 里的`state`是默认就是 `immutable` 的状态，在 `component` 中会维护一个对使用者透明的 `$state` 对象，它由 `Proxy` 来做支撑，当每次更改 `state` 的时候都会触发重新创建一个 `$state` 对象，在必要的时候，直接对比 `$state` 对象就能知道是否有 `state` 进行了变更，防止重复渲染，本来是想拿掉 `shouldComponentUpdate`这个钩子，但是考虑到一些特殊的场景会在 `render` 执行一些必要的逻辑，所以还是会有对`shouldComponentUpdate`有支持。
+
+### Props
+
+为了让 `props` 能够避免重复渲染，`flat`会在判断是否需要 `render`的时候做一次比较，比较元素上的 `Attributes`，但是只会进行第一层的比较，遇到复合数据类型，为了不为使用复合数据类型而牺牲渲染效率，`flat` 只会简单的比较它们的引用，如果不相同，则执行渲染 。
+
+但是你大可以不必担心这类的问题，在 `React` 中提出了使用 `immutable` 来创建一个新的对象，来防止重复渲染，方便比较，但是相反，在 `falt` 中，你只需要直接更改它即可，其他繁琐的事情都由 `falt` 帮你做了。
+
+```tsx
+class App extends FlatComponent {
+  @State()
+  person = {
+    name: "zhangsan",
+    age: 20
+  };
+
+  changeAge() {
+    this.person.age++;
+  }
+
+  render() {
+    console.info("app render");
+
+    return (
+      <div id="foo">
+        <Greeter person={this.person} />
+        <button onclick={() => this.changeAge()}>change age</button>
+      </div>
+    );
+  }
+}
+```
+
+每当执行到 `changeAge` 的时候，`falt` 会在背后帮你产生一个新对象，以减少重复渲染的问题。
+
+## Children
+
+至于 `children` 它作为一种特殊的 `props` 也会执行 `props` 的相关比较逻辑。
+
+`flat` 里采用一个 `children` 的规范，如果你传入一个以上的 `children`，`flat` 只会取第一个 `children` 来注入。
+
+**Right**
+
+```jsx
+<Foo>{this.bar}</Foo>
+```
+
+**Foo**
+
+```jsx
+<Foo>
+  {this.name}
+  {this.age} {/* age 不会被注入到 Foo */}
+</Foo>
+```
+
 ## String Template Compiler
 
 对于 string template 变量的求值，默认认定为 Text 节点，在解析模版完成后，再进行值的插入。
