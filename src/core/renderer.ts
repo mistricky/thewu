@@ -20,6 +20,11 @@ export interface VdomNode extends _Element {
   instance?: Component;
 }
 
+export interface ChildrenInfo {
+  propName: string;
+  _key: Symbol;
+}
+
 export type Vdom = VdomNode;
 
 // export interface WalkListener {}
@@ -30,7 +35,7 @@ export class Renderer {
   private vdom: Vdom | undefined;
   private dom: Element | undefined;
   private renderQueue = new RenderQueue();
-  private childrenTable: Map<Symbol, unknown> = new Map();
+  private childrenTable: Map<any, ChildrenInfo> = new Map();
   private a: any; // TODO：use template instead of
 
   private isChildrenChange(
@@ -66,9 +71,6 @@ export class Renderer {
   }
 
   private updateRender(vdomNode: VdomNode): VdomNode {
-    // if (subComponent.instance) {
-    //   console.info(this.childrenTable.get(subComponent.instance._key));
-    // }
     let { instance, children } = vdomNode;
 
     if (instance && this.renderQueue.keys.includes(instance._key)) {
@@ -215,6 +217,8 @@ export class Renderer {
 
     if (!data) return component;
 
+    let outThis = this;
+
     let result = class extends component {
       constructor() {
         super();
@@ -234,7 +238,6 @@ export class Renderer {
             ) {
               let arr = properties[prop] as any;
               // 为了能在运行时获取到数组的名称
-              console.info(prop);
               arr._key = self._key;
               arr.runtimeName = prop;
               arr.belong = self;
@@ -246,6 +249,10 @@ export class Renderer {
             self[prop] = properties[prop];
           }
         } else {
+          outThis.childrenTable.set(properties[0], {
+            _key: this._key,
+            propName: data
+          });
           self[data] = properties[0];
         }
       }
@@ -284,21 +291,25 @@ export class Renderer {
           }
 
           Reflect.set(target, prop, value);
-          // console.info(
-          //   isState(target.runtimeName),
-          //   isState(prop),
-          //   target.isPropertyInit
-          // );
 
-          console.info(data);
+          let childInfo = this.childrenTable.get(target);
 
-          if (target.runtimeName || (isState(prop) && target.isPropertyInit)) {
+          if (
+            target.runtimeName ||
+            childInfo ||
+            (isState(prop) && target.isPropertyInit)
+          ) {
             if (target.runtimeName) {
               target.belong[target.runtimeName][prop] = value;
             }
 
-            // push in render queue
-            this.renderQueue.addKey(target._key);
+            if (childInfo) {
+              this.renderQueue.addKey(childInfo._key);
+            } else {
+              // push in render queue
+              this.renderQueue.addKey(target._key);
+            }
+
             this.update();
           }
 
@@ -335,11 +346,6 @@ export class Renderer {
     component: FlatComponentConstructor,
     children: ElementChildren
   ) {
-    let prototype = component.prototype;
-    this.childrenTable.set(
-      prototype._key,
-      Reflect.getMetadata(CHILDREN_KEY, prototype)
-    );
     return this.injectProperty(component, CHILDREN_KEY, children, false);
   }
 
