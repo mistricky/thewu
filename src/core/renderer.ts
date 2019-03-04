@@ -150,11 +150,14 @@ export class Renderer {
   }
 
   private execChildren(children: ElementChildren): ElementChildren {
-    return children.map(child =>
-      typeOf(child) === DATA_TYPE.OBJECT
-        ? this.execRender(child as _Element)
-        : child
-    );
+    return []
+      .concat(...(children as any))
+      .map(child =>
+        typeOf(child) === DATA_TYPE.OBJECT ||
+        typeOf(child) === DATA_TYPE.FUNCTION
+          ? this.execRender(child as _Element)
+          : child
+      );
   }
 
   private injectData(
@@ -190,10 +193,9 @@ export class Renderer {
       instance.componentWillMount();
       vdomNode = {
         ...instance.render(),
-        attrs
+        attrs,
+        instance
       };
-
-      vdomNode.instance = instance;
 
       vdomNode.children = this.execChildren(vdomNode.children);
       instance.componentDidMount();
