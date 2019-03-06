@@ -2,7 +2,7 @@ type CharMatrix = Array<Array<MatrixItem>>;
 
 interface MatrixItem {
   value: number;
-  operation?: "replace" | "add" | "remove" | null;
+  operation?: 'replace' | 'add' | 'remove' | null;
   operateValue?: string;
   preItem?: MatrixItem;
 }
@@ -10,7 +10,7 @@ interface MatrixItem {
 interface Operation {
   item: MatrixItem;
   value: number;
-  type: "replace" | "add" | "remove";
+  type: 'replace' | 'add' | 'remove';
 }
 
 let operations = (
@@ -38,7 +38,6 @@ function printOperation(matrix: CharMatrix) {
   let preItem = node;
 
   while (preItem) {
-    console.info(preItem.operation, preItem.operateValue);
     preItem = preItem.preItem!;
   }
 }
@@ -70,17 +69,17 @@ export function ReckonEditDistance(originStr: string, targetStr: string): any {
         {
           item: matrix[i - 1][j - 1],
           value: matrix[i - 1][j - 1].value + step,
-          type: "replace"
+          type: 'replace'
         },
         {
           item: matrix[i - 1][j],
           value: matrix[i - 1][j].value + 1,
-          type: "remove"
+          type: 'remove'
         },
         {
           item: matrix[i][j - 1],
           value: matrix[i][j - 1].value + 1,
-          type: "add"
+          type: 'add'
         }
       ]
         .sort((a, b) => a.item.value - b.item.value)
@@ -89,7 +88,7 @@ export function ReckonEditDistance(originStr: string, targetStr: string): any {
       matrix[i][j] = {
         value: operation.value,
         operation:
-          operation.type === "replace"
+          operation.type === 'replace'
             ? step === 0
               ? null
               : operation.type
@@ -107,8 +106,7 @@ export function ReckonEditDistance(originStr: string, targetStr: string): any {
   //   console.info();
   // }
 
-  console.info(matrix[originLen][targetLen].value);
   printOperation(matrix);
 }
 
-ReckonEditDistance("abcd", "dabc");
+ReckonEditDistance('abcd', 'dabc');
