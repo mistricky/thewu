@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@types/node": "^10.12.21",
+    "prettier": "^1.16.4",
     "reflect-metadata": "^0.1.13"
   }
 }
