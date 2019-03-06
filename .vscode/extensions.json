@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "mf.biu-problem-matchers",
+    "eg2.tslint",
+    "esbenp.prettier-vscode",
+    "streetsidesoftware.code-spell-checker",
+    "stkb.rewrap",
+    "qiu8310.dot-template-vscode",
+    "jpoissonnier.vscode-styled-components"
+  ],
+  "unwantedRecommendations": []
+}

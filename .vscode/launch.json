@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch Program",
+      "program": "${workspaceFolder}/server/src/program/main.ts",
+      "outFiles": ["${workspaceFolder}/server/bld/program/**/*.js"]
+    }
+  ]
+}
