@@ -4,12 +4,13 @@ import {
   FlatComponentConstructor,
   Attrs,
   Component,
-  StateType
-} from "./element";
-import { typeOf, Copy, mapPop } from "../utils";
-import { DATA_TYPE } from "./data-types";
-import { PROP_KEY, CHILDREN_KEY, STATE_KEY } from "./decorators";
-import { RenderQueue } from "./render-queue";
+  StateType,
+  ElementChild
+} from './element';
+import { typeOf, Copy, mapPop, ToFlatArray, p } from '../utils';
+import { DATA_TYPE } from './data-types';
+import { PROP_KEY, CHILDREN_KEY, STATE_KEY } from './decorators';
+import { RenderQueue } from './render-queue';
 
 export interface UnknownIndex {
   [index: string]: unknown;
@@ -30,7 +31,7 @@ export type Vdom = VdomNode;
 // export interface WalkListener {}
 
 export class Renderer {
-  private tpl: HTMLTemplateElement = document.createElement("template");
+  private tpl: HTMLTemplateElement = document.createElement('template');
   private unParseVdom: _Element | undefined;
   private vdom: Vdom | undefined;
   private dom: Element | undefined;
@@ -79,26 +80,31 @@ export class Renderer {
 
       this.renderQueue.removeKey(_key);
 
-      for (let child of children) {
-        if (
-          typeOf(child) === DATA_TYPE.OBJECT &&
-          (child as Component).instance
-        ) {
+      /**
+       * 把子组件（class）添加到 subComponents 中
+       * 因为重新渲染会导致渲染好的子组件丢失，导致 tagName 变为 function
+       */
+      for (let child of ToFlatArray(children)) {
+        if (isSubComponent(child)) {
           subComponents.push(child as VdomNode);
         }
       }
 
-      vdomNode = { ...vdomNode, ...instance.render() };
+      vdomNode = {
+        ...vdomNode,
+        ...instance.render()
+      };
 
       let deferAttrs = this.renderQueue.getAttrs(_key);
+
       deferAttrs && (vdomNode.attrs = deferAttrs);
 
+      // 遍历新渲染后的 children
       let count = 0;
-      let newChildren = vdomNode.children.map(child => {
-        if (
-          typeOf(child) === DATA_TYPE.OBJECT &&
-          typeOf((child as Component).tagName) === DATA_TYPE.FUNCTION
-        ) {
+      let newChildren = ToFlatArray(vdomNode.children).map(child => {
+        let childElement = child as _Element;
+
+        if (typeOf(childElement.tagName) === DATA_TYPE.FUNCTION) {
           let subComponent = subComponents[count++];
           let attrs = (child as VdomNode).attrs;
 
@@ -106,15 +112,13 @@ export class Renderer {
            * 对比新旧 vdom 节点的 attr
            * 决定是否要 render
            */
-          if (
-            subComponent.instance &&
-            this.isPropsChange(subComponent.attrs, attrs)
-          ) {
+          if (subComponent.instance) {
             let _key = subComponent.instance._key;
             //set attrs defer
             this.renderQueue.setAttrs(_key, attrs);
             this.renderQueue.addKey(_key);
 
+            // 实际注入新的值的执行逻辑
             for (let attr of Object.keys(attrs)) {
               subComponent.instance[attr] = attrs[attr];
             }
@@ -146,18 +150,16 @@ export class Renderer {
     }
 
     this.vdom = this.updateRender(vdom);
+
     this.flush(this.dom!, this.parseVDomToElement(this.vdom));
   }
 
   private execChildren(children: ElementChildren): ElementChildren {
-    return []
-      .concat(...(children as any))
-      .map(child =>
-        typeOf(child) === DATA_TYPE.OBJECT ||
-        typeOf(child) === DATA_TYPE.FUNCTION
-          ? this.execRender(child as _Element)
-          : child
-      );
+    return ToFlatArray(children).map(child =>
+      typeOf(child) === DATA_TYPE.OBJECT || typeOf(child) === DATA_TYPE.FUNCTION
+        ? this.execRender(child as _Element)
+        : child
+    );
   }
 
   private injectData(
@@ -270,7 +272,7 @@ export class Renderer {
         states[state] = prototype[state];
       }
 
-      prototype["$states"] = { ...states };
+      prototype['$states'] = { ...states };
 
       let handler = {
         set: (
@@ -284,12 +286,12 @@ export class Renderer {
            */
           if (isState(prop) || target.runtimeName) {
             // immutable
-            let oldStates = target["$states"];
+            let oldStates = target['$states'];
             let newStates = Object.assign({}, oldStates, {
               [prop]: value
             });
 
-            target["$states"] = newStates;
+            target['$states'] = newStates;
           }
 
           Reflect.set(target, prop, value);
@@ -329,7 +331,7 @@ export class Renderer {
               return generateProxy(target[prop]);
             }
 
-            return (target["$states"] as UnknownIndex)[prop];
+            return (target['$states'] as UnknownIndex)[prop];
           }
 
           return Reflect.get(target, prop);
@@ -378,10 +380,10 @@ export class Renderer {
 
     if (children) {
       // 把数组抽到扁平，提升性能
-      for (let child of [].concat(...(children as any))) {
+      for (let child of ToFlatArray(children)) {
         let childEle: Text | Element | null | undefined;
 
-        if (typeof child !== "object") {
+        if (typeof child !== 'object') {
           childEle = document.createTextNode(child);
         } else {
           childEle = this.parseVDomToElement(child as _Element);
@@ -398,7 +400,7 @@ export class Renderer {
     dom: Element,
     content: DocumentFragment | HTMLElement | Element
   ) {
-    dom.innerHTML = "";
+    dom.innerHTML = '';
     dom.appendChild(content);
   }
 
@@ -413,4 +415,9 @@ export class Renderer {
     this.dom = dom;
     this.flush(dom, this.a);
   }
+}
+
+function isSubComponent(child: ElementChild): boolean {
+  return (typeOf(child) === DATA_TYPE.OBJECT &&
+    (child as Component).instance) as boolean;
 }
