@@ -63,7 +63,7 @@ export class Renderer {
 
   private isPropsChange(oldAttrs: Attrs, newAttrs: Attrs): boolean {
     for (let attr of Object.keys(newAttrs)) {
-      if (oldAttrs[attr] !== newAttrs[attr]) {
+      if (oldAttrs[attr].toString() !== newAttrs[attr].toString()) {
         return true;
       }
     }
@@ -102,25 +102,26 @@ export class Renderer {
       // 遍历新渲染后的 children
       let count = 0;
       let newChildren = ToFlatArray(vdomNode.children).map(child => {
-        let childElement = child as _Element;
+        let childElement = child as VdomNode;
 
         if (typeOf(childElement.tagName) === DATA_TYPE.FUNCTION) {
           let subComponent = subComponents[count++];
-          let attrs = (child as VdomNode).attrs;
+          let { attrs: newAttrs } = childElement;
+          let { attrs: oldAttrs } = subComponent;
 
           /**
            * 对比新旧 vdom 节点的 attr
            * 决定是否要 render
            */
-          if (subComponent.instance) {
+          if (subComponent.instance && this.isPropsChange(oldAttrs, newAttrs)) {
             let _key = subComponent.instance._key;
             //set attrs defer
-            this.renderQueue.setAttrs(_key, attrs);
+            this.renderQueue.setAttrs(_key, oldAttrs);
             this.renderQueue.addKey(_key);
 
             // 实际注入新的值的执行逻辑
-            for (let attr of Object.keys(attrs)) {
-              subComponent.instance[attr] = attrs[attr];
+            for (let attr of Object.keys(newAttrs)) {
+              subComponent.instance[attr] = newAttrs[attr];
             }
           }
 
@@ -371,7 +372,10 @@ export class Renderer {
     if (attrs) {
       for (let attr of Object.keys(attrs)) {
         if (typeOf(attrs[attr]) === DATA_TYPE.FUNCTION) {
-          el.addEventListener(attr.slice(2), attrs[attr] as any);
+          let handler = attrs[attr] as any;
+          handler._key = Symbol('handler');
+
+          el.addEventListener(attr.slice(2), handler);
           continue;
         }
         el.setAttribute(attr, attrs[attr].toString());
