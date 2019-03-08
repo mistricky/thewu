@@ -1,4 +1,4 @@
-import { Attrs, ElementChildren, _Element } from "./element";
+import { Attrs, ElementChildren, _Element } from './element';
 
 export type HyperScript = (
   tagName: string,
