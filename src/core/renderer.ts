@@ -28,6 +28,14 @@ export interface ChildrenInfo {
 
 export type Vdom = VdomNode;
 
+interface EventNamesMap {
+  [index: string]: string;
+}
+
+const EventNames: EventNamesMap = {
+  change: 'input'
+};
+
 // export interface WalkListener {}
 
 export class Renderer {
@@ -111,7 +119,7 @@ export class Renderer {
 
           /**
            * 对比新旧 vdom 节点的 attr
-           * 决定是否要 render
+           * 决定是否要 render 以及注入 props
            */
           if (subComponent.instance && this.isPropsChange(oldAttrs, newAttrs)) {
             let _key = subComponent.instance._key;
@@ -150,6 +158,7 @@ export class Renderer {
       return;
     }
 
+    console.info('update');
     this.vdom = this.updateRender(vdom);
 
     this.flush(this.dom!, this.parseVDomToElement(this.vdom));
@@ -372,10 +381,10 @@ export class Renderer {
     if (attrs) {
       for (let attr of Object.keys(attrs)) {
         if (typeOf(attrs[attr]) === DATA_TYPE.FUNCTION) {
-          let handler = attrs[attr] as any;
-          handler._key = Symbol('handler');
+          const handler = attrs[attr] as any;
+          const eventName = mapEventName(attr.slice(2));
 
-          el.addEventListener(attr.slice(2), handler);
+          el.addEventListener(eventName, handler);
           continue;
         }
         el.setAttribute(attr, attrs[attr].toString());
@@ -424,4 +433,8 @@ export class Renderer {
 function isSubComponent(child: ElementChild): boolean {
   return (typeOf(child) === DATA_TYPE.OBJECT &&
     (child as Component).instance) as boolean;
+}
+
+function mapEventName(name: string) {
+  return EventNames[name] || name;
 }
