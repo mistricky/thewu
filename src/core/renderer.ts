@@ -17,7 +17,7 @@ export interface UnknownIndex {
 }
 
 export interface VdomNode extends _Element {
-  // ele: HTMLElement;
+  el?: HTMLElement;
   instance?: Component;
 }
 
@@ -371,7 +371,7 @@ export class Renderer {
     return this.injectProperty(component, STATE_KEY, undefined);
   }
 
-  private parseVDomToElement(originEle: _Element): Element {
+  private parseVDomToElement(originEle: VdomNode): Element {
     let { tagName, attrs, children } = originEle;
 
     let el: HTMLElement & UnknownIndex = document.createElement(
@@ -392,7 +392,7 @@ export class Renderer {
     }
 
     if (children) {
-      // 把数组抽到扁平，提升性能
+      // 把子节点抽到扁平，提升性能
       for (let child of ToFlatArray(children)) {
         let childEle: Text | Element | null | undefined;
 
@@ -406,6 +406,8 @@ export class Renderer {
       }
     }
 
+    // 把真实 dom 挂载到 virtual dom
+    originEle.el = el;
     return el;
   }
 
@@ -420,6 +422,8 @@ export class Renderer {
   render(originEle: _Element) {
     this.unParseVdom = Copy(originEle);
     this.vdom = this.execRender(Copy(this.unParseVdom));
+
+    // 渲染真实 dom 节点
     this.a = this.parseVDomToElement(this.vdom);
     // this.tpl.content.appendChild(this.parseVDomToElement(this.vdom));
   }
