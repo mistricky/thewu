@@ -46,7 +46,7 @@ TypeScript 的 Decorator 不能支持改变类型，这样只有使用类 React 
 class App extends FlatComponent {
   @State()
   person = {
-    name: "zhangsan",
+    name: 'zhangsan',
     age: 20
   };
 
@@ -55,7 +55,7 @@ class App extends FlatComponent {
   }
 
   render() {
-    console.info("app render");
+    console.info('app render');
 
     return (
       <div id="foo">
@@ -96,7 +96,7 @@ class App extends FlatComponent {
 这里有一个例外，当变量为数组时，会在解析模版之前就对其进行求值，然后再把值拼接到模版，flat 会认为，数组返回的也是一个迭代模版。
 
 ```typescript
-import Flat, { FlatComponent, Prop, _Element, Ele, Children } from "../../dist";
+import Flat, { FlatComponent, Prop, _Element, Ele, Children } from '../../dist';
 
 class Greeter extends FlatComponent {
   @Children()
@@ -109,15 +109,22 @@ class Greeter extends FlatComponent {
   }
 }
 
-let names = ["A", "B", "C"];
+let names = ['A', 'B', 'C'];
 let input = (
   <div id="foo">
     <Greeter>{names}</Greeter>
   </div>
 );
 
-new Ele(input).bindDOM(document.querySelector("#root"));
+new Ele(input).bindDOM(document.querySelector('#root'));
 ```
+
+## 关于 \_Key
+
+`flat` 里的 `key` 跟 `react` 或者 `vue` 的 `key` 不同，`flat` 的 `key` 是用 `Symbol` 来表示的，于是比较的时候仅仅是比较的是引用，如果两个 `key` 相同，那么则认为它是完全相同的节点。
+`_key` 被挂载到 `FlatComponent` 下，在创建组件的时候会被继承下来。
+
+在 `flat` 中，所有以 `_` 或者是 `$` 开头的变量，都是不被暴露出的，因此，你不能在 `flat` 中被访问到。
 
 TODO：
 
