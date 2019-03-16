@@ -7,7 +7,7 @@ import {
   StateType,
   ElementChild
 } from './element';
-import { typeOf, Copy, mapPop, ToFlatArray, p } from '../utils';
+import { typeOf, Copy, mapPop, ToFlatArray, p, getLayerOfVdom } from '../utils';
 import { DATA_TYPE } from './data-types';
 import { PROP_KEY, CHILDREN_KEY, STATE_KEY } from './decorators';
 import { RenderQueue } from './render-queue';
@@ -17,6 +17,7 @@ export interface UnknownIndex {
 }
 
 export interface VdomNode extends _Element {
+  nextSibling?: VdomNode;
   el?: HTMLElement;
   instance?: Component;
 }
@@ -46,28 +47,6 @@ export class Renderer {
   private renderQueue = new RenderQueue();
   private childrenTable: Map<any, ChildrenInfo> = new Map();
   private a: any; // TODO：use template instead of
-
-  private isChildrenChange(
-    children: ElementChildren,
-    instance: Component
-  ): boolean {
-    let { _key } = instance;
-    let childName: any = mapPop(this.childrenTable, _key);
-
-    if (!childName) {
-      return false;
-    }
-
-    let currentChild = instance[childName];
-
-    for (let child of children) {
-      if (child !== currentChild) {
-        return true;
-      }
-    }
-
-    return false;
-  }
 
   private isPropsChange(oldAttrs: Attrs, newAttrs: Attrs): boolean {
     for (let attr of Object.keys(newAttrs)) {
@@ -158,10 +137,11 @@ export class Renderer {
       return;
     }
 
-    console.info('update');
-    this.vdom = this.updateRender(vdom);
+    let newVdom = this.updateRender(vdom);
 
-    this.flush(this.dom!, this.parseVDomToElement(this.vdom));
+    console.info(getLayerOfVdom(newVdom, 1));
+    console.info(newVdom);
+    // this.flush(this.dom!, this.parseVDomToElement(this.vdom));
   }
 
   private execChildren(children: ElementChildren): ElementChildren {
@@ -392,13 +372,22 @@ export class Renderer {
     }
 
     if (children) {
+      let flatChildren = ToFlatArray(children);
+
       // 把子节点抽到扁平，提升性能
-      for (let child of ToFlatArray(children)) {
+      for (let child of flatChildren) {
         let childEle: Text | Element | null | undefined;
 
         if (typeof child !== 'object') {
           childEle = document.createTextNode(child);
         } else {
+          // 为 vdomNode 添加 nextSibling 属性方便层级遍历
+          let nextSibling = flatChildren[flatChildren.indexOf(child) + 1];
+
+          if (nextSibling) {
+            (child as any).nextSibling = nextSibling;
+          }
+
           childEle = this.parseVDomToElement(child as _Element);
         }
 
@@ -419,6 +408,8 @@ export class Renderer {
     dom.appendChild(content);
   }
 
+  private attachNextSibling(vdom: Vdom) {}
+
   render(originEle: _Element) {
     this.unParseVdom = Copy(originEle);
     this.vdom = this.execRender(Copy(this.unParseVdom));
@@ -426,6 +417,7 @@ export class Renderer {
     // 渲染真实 dom 节点
     this.a = this.parseVDomToElement(this.vdom);
     // this.tpl.content.appendChild(this.parseVDomToElement(this.vdom));
+    console.info(this.vdom);
   }
 
   bindDOM(dom: Element) {
