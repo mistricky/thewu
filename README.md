@@ -132,4 +132,4 @@ TODO：
 - [x] 组件钩子的调用时机以及确定钩子函数
 - [x] ~~@FlatComponent 实现~~
 - [x] Props 实现，以及 @Prop 的实现
-- [ ] virtual DOM 的 Diff 算法
+- [x] virtual DOM 的 Diff 算法
