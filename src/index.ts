@@ -1,6 +1,7 @@
-export * from "./core";
-export * from "./robust";
-export * from "./utils";
+export * from './core';
+export * from './robust';
+export * from './utils';
+export * from './types';
 
 declare global {
   namespace JSX {

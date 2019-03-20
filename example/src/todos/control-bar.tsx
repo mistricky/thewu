@@ -1,13 +1,38 @@
-import { FlatComponent } from "../../../dist";
-import Flat from "../../../dist/core/h";
+import { FlatComponent, State, Prop, ChangeEvent } from '../../../dist';
+import Flat from '../../../dist/core/h';
 
-export class ControlBar extends FlatComponent {
+interface ControlBarProps {
+  handleAddItemClick: (inputText: string) => void;
+}
+
+export class ControlBar extends FlatComponent<ControlBarProps> {
+  @State()
+  inputText: string = '';
+
+  @Prop()
+  handleAddItemClick!: (inputText: string) => void;
+
+  handleInputItemNameChange(text: string) {
+    this.inputText = text;
+  }
+
   render() {
+    console.info('control bar render');
+
     return (
       <div>
         <div>
-          <button>Add Item</button>
-          <input type="text" placeholder="Please input item name" />
+          <button onclick={() => this.handleAddItemClick(this.inputText)}>
+            Add Item
+          </button>
+          <input
+            onchange={(e: ChangeEvent<HTMLInputElement>) =>
+              this.handleInputItemNameChange(e.target.value)
+            }
+            type="text"
+            placeholder="Please input item name"
+            value={this.inputText}
+          />
         </div>
       </div>
     );

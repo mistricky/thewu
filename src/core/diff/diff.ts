@@ -1,95 +1,181 @@
-// import { OPERATION } from './operation';
-// import { isString } from './utils';
+import { Operation, OPERATIONS, move, add, remove } from './operation';
+import { insert } from '../../utils';
+import { VdomNode } from '../renderer';
+import { ElementChild, _Element } from '../element';
 
-// interface Patch {
-//   type: number;
-//   content?: unknown;
-//   index?: number;
-// }
+export type LayerNode = VdomNode | undefined | null | ElementChild | string;
 
-// interface Attrs {
-//   [index: string]: unknown;
-// }
+export type VdomNodeLayer = LayerNode[];
 
-// export function diff(oldVdom: any, newVdom: any) {
-//   let patches = {};
-//   let index = 0;
+export interface UpdateIndexTuple {
+  isDone: boolean;
+  value: number;
+}
 
-//   walk(oldVdom, newVdom, index, patches);
+export function diff(oldVdom: VdomNodeLayer, newVdom: VdomNodeLayer) {
+  let oldStart = 0,
+    oldEnd = oldVdom.length - 1,
+    newStart = 0,
+    newEnd = newVdom.length - 1;
 
-//   return patches;
-// }
+  return compare(oldStart, oldEnd, newStart, newEnd, [...oldVdom], newVdom, []);
+}
 
-// function walk(oldVdomNode: any, newVdomNode: any, index: number, patches: any) {
-//   let currentPatches: Patch[] = [];
+export function compare(
+  oldStart: number,
+  oldEnd: number,
+  newStart: number,
+  newEnd: number,
+  oldVdom: VdomNodeLayer,
+  newVdom: VdomNodeLayer,
+  operations: Operation<OPERATIONS>[]
+): Operation<OPERATIONS>[] {
+  if (oldStart > oldEnd || newStart > newEnd) {
+    // is add
+    if (newStart <= newEnd) {
+      let waitAddItems = newVdom.slice(newStart, newEnd + 1);
+      oldVdom = insert(
+        oldVdom,
+        oldEnd,
+        ...waitAddItems.slice().map(() => null)
+      );
+      operations = add(operations, oldEnd, waitAddItems);
+    }
 
-//   // 新节点没有了 说明被移除
-//   if (!newVdomNode) {
-//     currentPatches.push({
-//       type: OPERATION.REMOVE,
-//       index
-//     });
-//   } else if (
-//     isString(oldVdomNode) &&
-//     isString(newVdomNode) &&
-//     oldVdomNode != newVdomNode
-//   ) {
-//     // 字符串
-//     currentPatches.push({
-//       type: OPERATION.TEXT_CHANGE,
-//       content: newVdomNode
-//     });
-//   } else if (oldVdomNode.tagName === newVdomNode.tagName) {
-//     // 为相同类型的元素
-//     // 属性差异
-//     let diffAttrs = attrsDiff(oldVdomNode.attrs, newVdomNode.attrs);
+    // is remove
+    if (oldStart <= oldEnd) {
+      operations = remove(operations, oldVdom, oldStart, oldEnd);
+    }
 
-//     if (Object.keys(diffAttrs).length) {
-//       currentPatches.push({
-//         type: OPERATION.ATTR_CHANGE,
-//         content: diffAttrs
-//       });
-//     }
+    return operations;
+  }
 
-//     childrenDiff(oldVdomNode.children, newVdomNode.children, index, patches);
-//   } else {
-//     // 为不同元素
-//     currentPatches.push({
-//       type: OPERATION.REPLACE,
-//       content: newVdomNode
-//     });
-//   }
+  // compare start and end
+  if (compareNode(oldVdom[oldStart], newVdom[newStart])) {
+    oldStart++;
+    newStart++;
+    return compare(
+      oldStart,
+      oldEnd,
+      newStart,
+      newEnd,
+      oldVdom,
+      newVdom,
+      operations
+    );
+  }
 
-//   // 收集 patches
-//   if (currentPatches.length > 0) {
-//     patches[index] = currentPatches;
-//   }
-// }
+  if (compareNode(oldVdom[oldEnd], newVdom[newEnd])) {
+    oldEnd--;
+    newEnd--;
+    return compare(
+      oldStart,
+      oldEnd,
+      newStart,
+      newEnd,
+      oldVdom,
+      newVdom,
+      operations
+    );
+  }
 
-// function childrenDiff(
-//   oldVdomChildren: any,
-//   newVdomChildren: any,
-//   index: number,
-//   patches: any
-// ) {
-//   for (let i of Object.keys(oldVdomChildren)) {
-//     walk(oldVdomChildren[i], newVdomChildren[i], ++index, patches);
-//   }
-// }
+  let hasNewStartNode = true;
+  let hasNewEndNode = true;
 
-// function attrsDiff(oldAttrs: Attrs, newAttrs: Attrs): Attrs {
-//   let union = { ...oldAttrs, ...newAttrs };
-//   let diffAttrs: Attrs = {};
+  // filter node that missing in oldVdom
+  for (let cursor = oldStart; cursor <= oldEnd; cursor++) {
+    let node = oldVdom[cursor];
 
-//   for (let attr of Object.keys(union)) {
-//     if (
-//       !oldAttrs.hasOwnProperty(attr) ||
-//       !newAttrs.hasOwnProperty(attr) ||
-//       oldAttrs[attr] !== newAttrs[attr]
-//     ) {
-//       diffAttrs[attr] = union[attr];
-//     }
-//   }
+    if (compareNode(node, newVdom[newStart])) {
+      hasNewStartNode = false;
+    }
 
-//   return diffAttrs;
-// }
+    if (compareNode(node, newVdom[newEnd])) {
+      hasNewEndNode = false;
+    }
+  }
+
+  if (hasNewEndNode || hasNewStartNode) {
+    // parse traverse result
+    if (hasNewEndNode) {
+      operations = add(operations, oldEnd, newVdom[newEnd]);
+      newEnd--;
+
+      oldVdom.push(null);
+    }
+
+    if (hasNewStartNode) {
+      operations = add(operations, oldStart - 1, newVdom[newStart]);
+      newStart++;
+
+      oldVdom.unshift(null);
+      oldStart++;
+      oldEnd++;
+    }
+
+    return compare(
+      oldStart,
+      oldEnd,
+      newStart,
+      newEnd,
+      oldVdom,
+      newVdom,
+      operations
+    );
+  }
+
+  for (let cursor = oldStart; cursor <= oldEnd; cursor++) {
+    // move node to start of layer
+    if (compareNode(oldVdom[cursor], newVdom[newStart])) {
+      operations = move(operations, oldVdom, cursor, oldStart - 1);
+      oldVdom[cursor] = undefined;
+      newStart++;
+
+      oldVdom.unshift(null);
+      oldStart++; // is add
+      oldEnd++;
+
+      // is last element
+      if (cursor === oldEnd) {
+        oldEnd--;
+      }
+
+      break;
+    }
+
+    // move node to end of layer
+    if (compareNode(oldVdom[cursor], newVdom[newEnd])) {
+      operations = move(operations, oldVdom, cursor, oldEnd);
+      oldVdom[cursor] = undefined;
+      newEnd--;
+
+      oldVdom.push(null);
+
+      // is start element
+      if (cursor === oldStart) {
+        oldStart++;
+      }
+
+      break;
+    }
+  }
+
+  return compare(
+    oldStart,
+    oldEnd,
+    newStart,
+    newEnd,
+    oldVdom,
+    newVdom,
+    operations
+  );
+}
+
+function compareNode(oldVdom: LayerNode, newVdom: LayerNode) {
+  return (
+    (oldVdom &&
+      newVdom &&
+      (oldVdom as _Element).tagName === (newVdom as _Element).tagName) ||
+    oldVdom === newVdom
+  );
+}
