@@ -10,7 +10,7 @@
 
 # Flat
 
-A lightweight MVVM framework base on TypeScript.
+Flat is a lightweight MVVM framework base on TypeScript, and flat can provide more possibilities in your project.
 
 ## Render
 
