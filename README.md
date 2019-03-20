@@ -12,8 +12,6 @@
 
 A lightweight MVVM framework base on TypeScript.
 
-dev...
-
 ## Render
 
 在执行 render 的时候，会将所有的数组抽成扁平，flat 会认为，children 就只有 Text 节点和 \_Elememt 节点，相对来说，抽成扁平，在性能上也会得到提升。
@@ -126,10 +124,41 @@ new Ele(input).bindDOM(document.querySelector('#root'));
 
 在 `flat` 中，所有以 `_` 或者是 `$` 开头的变量，都是不被暴露出的，因此，你不能在 `flat` 中被访问到。
 
-TODO：
+## Two-Way Data-Binding
 
-- [x] 对于自定义组件的求值策略
-- [x] 组件钩子的调用时机以及确定钩子函数
-- [x] ~~@FlatComponent 实现~~
-- [x] Props 实现，以及 @Prop 的实现
-- [x] virtual DOM 的 Diff 算法
+这里给出一个 `flat` 实现双向数据绑定的例子
+
+```tsx
+import Flat, { _Element, FlatElement, FlatComponent, State } from '../../dist';
+
+class Foo extends FlatComponent {
+  @State()
+  text: string = 'hello';
+
+  handleInputChange(e: Flat.ChangeEvent<HTMLInputElement>) {
+    this.text = e.target.value;
+  }
+
+  render() {
+    return (
+      <div>
+        <input
+          type="text"
+          onchange={(e: Flat.ChangeEvent<HTMLInputElement>) =>
+            this.handleInputChange(e)
+          }
+        />
+        <p>{this.text}</p>
+      </div>
+    );
+  }
+}
+
+new FlatElement(<Foo />).bindDOM(document.querySelector('#root'));
+```
+
+![two-way-data-binding](https://github.com/flat-dev-ti/Flat/blob/master/doc/flat-bind.gif)
+
+## LICENSE
+
+MIT
