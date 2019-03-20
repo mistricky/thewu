@@ -62,9 +62,9 @@ export function remove<T>(arr: (T | undefined)[], ...indexes: number[]) {
   return filterUndefined(duplicate);
 }
 
-export function getLayerOfVdom(vdom: Vdom, layer: number) {
+export function getLayerOfVdom(vdom: Vdom, layer: number): ElementChildren {
   if (layer === 0) {
-    return vdom;
+    return [vdom];
   }
 
   let result: ElementChildren = [];
