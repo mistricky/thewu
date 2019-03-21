@@ -1,20 +1,23 @@
-import { VdomNodeLayer } from './diff';
+import { VdomNodeLayer, LayerNode } from './diff';
 import { filterUndefined } from '../../utils';
 import { VdomNode } from '../renderer';
 
 export type OPERATIONS = 'move' | 'add' | 'remove';
 
 export interface MovePayload {
+  layerDom: HTMLElement;
   originIndex: number;
   targetIndex: number;
 }
 
 export interface AddPayload<T> {
+  layerDom: HTMLElement;
   targetIndex: number;
   targets: T[];
 }
 
 export interface RemovePayload {
+  layerDom: HTMLElement;
   targetIndexes: number[];
 }
 
@@ -42,6 +45,7 @@ function duplicatePush(
 
 export function add<T = VdomNode>(
   operations: Operation<OPERATIONS, T>[],
+  vdomNode: LayerNode[],
   targetIndex: number,
   ...targets: T[]
 ) {
@@ -53,18 +57,22 @@ export function add<T = VdomNode>(
 
   return duplicatePush(operations, {
     name: 'add',
-    payload: { targetIndex, targets: [].concat(...(targets as any)) }
+    payload: {
+      targetIndex,
+      targets: [].concat(...(targets as any)),
+      layerDom: (vdomNode[targetIndex] as VdomNode).el!
+    }
   });
 }
 
 export function remove(
   operations: Operation<OPERATIONS>[],
-  oldVdom: VdomNodeLayer,
+  vdomNode: VdomNodeLayer,
   sliceStart: number,
   sliceEnd: number
 ) {
   let count = 0;
-  let indexes = oldVdom.map((node, index) => {
+  let indexes = vdomNode.map((node, index) => {
     if (index >= sliceStart && index <= sliceEnd) {
       if (node === undefined) {
         count++;
@@ -84,13 +92,16 @@ export function remove(
 
   return duplicatePush(operations, {
     name: 'remove',
-    payload: { targetIndexes: [].concat(...(indexes as any)) }
+    payload: {
+      targetIndexes: [].concat(...(indexes as any)),
+      layerDom: (vdomNode[indexes[0] as number] as VdomNode).el!
+    }
   });
 }
 
 export function move(
   operations: Operation<OPERATIONS>[],
-  VdomNode: VdomNodeLayer,
+  vdomNode: VdomNodeLayer,
   originIndex: number,
   targetIndex: number
 ) {
@@ -101,7 +112,7 @@ export function move(
     [targetIndex]: () => (targetIndex -= undefineds)
   };
 
-  for (let index of Object.keys(VdomNode)) {
+  for (let index of Object.keys(vdomNode)) {
     let operationFunc = OPERATE_METHODS[+index];
 
     if (operationFunc) {
@@ -109,13 +120,17 @@ export function move(
       continue;
     }
 
-    if (VdomNode[+index] === undefined) {
+    if (vdomNode[+index] === undefined) {
       undefineds++;
     }
   }
 
   return duplicatePush(operations, {
     name: 'move',
-    payload: { targetIndex, originIndex }
+    payload: {
+      targetIndex,
+      originIndex,
+      layerDom: (vdomNode[originIndex] as VdomNode).el!
+    }
   });
 }
