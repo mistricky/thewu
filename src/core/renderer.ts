@@ -14,12 +14,14 @@ import {
   ToFlatArray,
   p,
   getLayerOfVdom,
-  replace
+  replace,
+  isPropsChange
 } from '../utils';
 import { DATA_TYPE } from './data-types';
 import { PROP_KEY, CHILDREN_KEY, STATE_KEY } from './decorators';
 import { RenderQueue } from './render-queue';
-import { diff, compare } from './diff/diff';
+import { diff } from './diff/diff';
+import _ from 'lodash';
 
 export interface UnknownIndex {
   [index: string]: unknown;
@@ -57,17 +59,11 @@ export class Renderer {
   private childrenTable: Map<any, ChildrenInfo> = new Map();
   private a: any; // TODO：use template instead of
 
-  private isPropsChange(oldAttrs: Attrs, newAttrs: Attrs): boolean {
-    for (let attr of Object.keys(newAttrs)) {
-      if (oldAttrs[attr].toString() !== newAttrs[attr].toString()) {
-        return true;
-      }
+  private compare(oldVdom: VdomNode, newVdom: VdomNode) {
+    if (!oldVdom && !newVdom) {
+      return;
     }
 
-    return false;
-  }
-
-  private compare(oldVdom: VdomNode, newVdom: VdomNode) {
     const oldEl = oldVdom.el!;
     const newEl = newVdom.el!;
     const targetChildren = newVdom.children;
@@ -87,13 +83,24 @@ export class Renderer {
       }
     }
 
-    targetChildren &&
+    if (targetChildren) {
+      // console.info(oldVdom.children, newVdom.children);
+      console.info(diff(oldVdom.children as any, newVdom.children as any));
+
       targetChildren.forEach((child, index) => {
         this.compare(oldVdom.children[index] as any, child as any);
       });
+    }
   }
 
   private updateRender(vdomNode: VdomNode, compareVNode?: VdomNode): VdomNode {
+    if (!vdomNode) {
+      return vdomNode;
+    }
+
+    // console.info(compareVNode);
+    // console.info(vdomNode, compareVNode);
+
     let originalVdom: VdomNode | undefined;
     let { instance, children } = vdomNode;
 
@@ -145,7 +152,7 @@ export class Renderer {
            * 对比新旧 vdom 节点的 attr
            * 决定是否要 render 以及注入 props
            */
-          if (subComponent.instance && this.isPropsChange(oldAttrs, newAttrs)) {
+          if (subComponent.instance && isPropsChange(oldAttrs, newAttrs)) {
             let _key = subComponent.instance._key;
             //set attrs defer
             this.renderQueue.setAttrs(_key, oldAttrs);
@@ -166,16 +173,13 @@ export class Renderer {
       vdomNode.children = newChildren as ElementChildren;
     }
 
-    // 保留原来的属性
-    // if(vdomNode.){
-
-    // }
-
     vdomNode.children &&
       (vdomNode.children = vdomNode.children.map((child, index) =>
         this.updateRender(
           child as VdomNode,
-          originalVdom ? (originalVdom.children[index] as any) : undefined
+          originalVdom
+            ? (ToFlatArray(originalVdom.children)[index] as any)
+            : undefined
         )
       ));
 
@@ -184,13 +188,13 @@ export class Renderer {
 
   // effect function
   private update() {
-    let vdom = { ...this.vdom } as VdomNode;
+    let vdom = this.vdom;
 
     if (!vdom) {
       return;
     }
 
-    let newVdom = this.updateRender(vdom);
+    let newVdom = this.updateRender(_.cloneDeep(vdom));
 
     this.compare(vdom, newVdom);
     // this.flush(this.dom!, this.parseVDomToElement(this.vdom));
@@ -496,7 +500,11 @@ function copyPropertyToVdom(vdom1: VdomNode, vdom2: VdomNode): VdomNode {
     );
   }
 
-  [result.tagName, result.attrs] = [vdom2.tagName, vdom2.attrs];
+  if (typeOf(vdom2.tagName) !== DATA_TYPE.FUNCTION) {
+    result.tagName = vdom2.tagName;
+  }
+
+  result.attrs = vdom2.attrs;
 
   return result;
 }
