@@ -51,7 +51,7 @@ export function compare(
         oldEnd,
         ...waitAddItems.slice().map(() => null)
       );
-      operations = add(operations, oldEnd, waitAddItems);
+      operations = add(operations, oldVdom, oldEnd, waitAddItems);
     }
 
     // is remove
@@ -117,14 +117,14 @@ export function compare(
   if (hasNewEndNode || hasNewStartNode) {
     // parse traverse result
     if (hasNewEndNode) {
-      operations = add(operations, oldEnd, newVdom[newEnd]);
+      operations = add(operations, oldVdom, oldEnd, newVdom[newEnd]);
       newEnd--;
 
       oldVdom.push(null);
     }
 
     if (hasNewStartNode) {
-      operations = add(operations, oldStart - 1, newVdom[newStart]);
+      operations = add(operations, oldVdom, oldStart - 1, newVdom[newStart]);
       newStart++;
 
       oldVdom.unshift(null);
