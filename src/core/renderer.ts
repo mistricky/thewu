@@ -14,7 +14,6 @@ import {
   ToFlatArray,
   p,
   getLayerOfVdom,
-  replace,
   isPropsChange
 } from '../utils';
 import { DATA_TYPE } from './data-types';
@@ -22,6 +21,9 @@ import { PROP_KEY, CHILDREN_KEY, STATE_KEY } from './decorators';
 import { RenderQueue } from './render-queue';
 import { diff } from './diff/diff';
 import _ from 'lodash';
+import { replace } from '../utils/dom';
+import { patcher } from './diff/patcher';
+import { Operation, OPERATIONS } from './diff';
 
 export interface UnknownIndex {
   [index: string]: unknown;
@@ -84,8 +86,9 @@ export class Renderer {
     }
 
     if (targetChildren) {
-      // console.info(oldVdom.children, newVdom.children);
-      console.info(diff(oldVdom.children as any, newVdom.children as any));
+      let patchResult = diff(oldVdom.children as any, newVdom.children as any);
+
+      patcher(patchResult as Operation<OPERATIONS, VdomNode>[]);
 
       targetChildren.forEach((child, index) => {
         this.compare(oldVdom.children[index] as any, child as any);
@@ -97,9 +100,6 @@ export class Renderer {
     if (!vdomNode) {
       return vdomNode;
     }
-
-    // console.info(compareVNode);
-    // console.info(vdomNode, compareVNode);
 
     let originalVdom: VdomNode | undefined;
     let { instance, children } = vdomNode;
@@ -196,6 +196,7 @@ export class Renderer {
 
     let newVdom = this.updateRender(_.cloneDeep(vdom));
 
+    this.parseVDomToElement(newVdom);
     this.compare(vdom, newVdom);
     // this.flush(this.dom!, this.parseVDomToElement(this.vdom));
   }
@@ -464,8 +465,6 @@ export class Renderer {
     dom.appendChild(content);
   }
 
-  private attachNextSibling(vdom: Vdom) {}
-
   render(originEle: _Element) {
     this.unParseVdom = Copy(originEle);
     this.vdom = this.execRender(Copy(this.unParseVdom));
@@ -473,7 +472,6 @@ export class Renderer {
     // 渲染真实 dom 节点
     this.a = this.parseVDomToElement(this.vdom);
     // this.tpl.content.appendChild(this.parseVDomToElement(this.vdom));
-    // console.info(this.vdom);
   }
 
   bindDOM(dom: Element) {
