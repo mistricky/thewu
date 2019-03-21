@@ -1,7 +1,8 @@
 import { Operation, OPERATIONS, move, add, remove } from './operation';
-import { insert } from '../../utils';
+import { insert, typeOf, isPropsChange } from '../../utils';
 import { VdomNode } from '../renderer';
 import { ElementChild, _Element } from '../element';
+import { DATA_TYPE } from '../data-types';
 
 export type LayerNode = VdomNode | undefined | null | ElementChild | string;
 
@@ -18,7 +19,18 @@ export function diff(oldVdom: VdomNodeLayer, newVdom: VdomNodeLayer) {
     newStart = 0,
     newEnd = newVdom.length - 1;
 
-  return compare(oldStart, oldEnd, newStart, newEnd, [...oldVdom], newVdom, []);
+  let oldVdomDuplicate =
+    typeOf(oldVdom) === DATA_TYPE.STRING ? oldVdom : [...oldVdom];
+
+  return compare(
+    oldStart,
+    oldEnd,
+    newStart,
+    newEnd,
+    oldVdomDuplicate,
+    newVdom,
+    []
+  );
 }
 
 export function compare(
@@ -54,6 +66,7 @@ export function compare(
   if (compareNode(oldVdom[oldStart], newVdom[newStart])) {
     oldStart++;
     newStart++;
+
     return compare(
       oldStart,
       oldEnd,
@@ -68,6 +81,7 @@ export function compare(
   if (compareNode(oldVdom[oldEnd], newVdom[newEnd])) {
     oldEnd--;
     newEnd--;
+
     return compare(
       oldStart,
       oldEnd,
@@ -93,6 +107,11 @@ export function compare(
     if (compareNode(node, newVdom[newEnd])) {
       hasNewEndNode = false;
     }
+  }
+
+  // filter only one new element condition
+  if (newStart === newEnd && hasNewEndNode && hasNewStartNode) {
+    hasNewEndNode = false;
   }
 
   if (hasNewEndNode || hasNewStartNode) {
@@ -172,10 +191,23 @@ export function compare(
 }
 
 function compareNode(oldVdom: LayerNode, newVdom: LayerNode) {
-  return (
-    (oldVdom &&
-      newVdom &&
-      (oldVdom as _Element).tagName === (newVdom as _Element).tagName) ||
+  if (!oldVdom || !newVdom) {
+    return true;
+  }
+
+  // 元素或者字符串相等 元素的 attrs 做对比 && 元素的 tagName 对比
+  if (
+    (typeOf(oldVdom) !== DATA_TYPE.STRING &&
+      typeOf(newVdom) !== DATA_TYPE.STRING &&
+      (oldVdom as _Element).tagName === (newVdom as _Element).tagName &&
+      !isPropsChange(
+        (oldVdom as VdomNode).attrs,
+        (newVdom as VdomNode).attrs
+      )) ||
     oldVdom === newVdom
-  );
+  ) {
+    return true;
+  }
+
+  return false;
 }
