@@ -7,6 +7,8 @@
     "start:example": "parcel ./example/index.html"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.123",
+    "lodash": "^4.17.11",
     "parcel-bundler": "^1.11.0",
     "typescript": "^3.3.1"
   },
