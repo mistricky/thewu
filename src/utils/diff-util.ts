@@ -4,13 +4,7 @@ import {
   RemovePayload,
   AddPayload
 } from '../core/diff/operation';
-import {
-  Vdom,
-  ElementChildren,
-  ElementChild,
-  _Element,
-  VdomNode
-} from '../core';
+import { Vdom, ElementChildren, ElementChild, _Element, Attrs } from '../core';
 
 export type Payloads<T> = MovePayload | RemovePayload | AddPayload<T>;
 
@@ -87,4 +81,14 @@ export function getLayerOfVdom(vdom: Vdom, layer: number): ElementChildren {
   }
 
   return result;
+}
+
+export function isPropsChange(oldAttrs: Attrs, newAttrs: Attrs): boolean {
+  for (let attr of Object.keys(newAttrs)) {
+    if (oldAttrs[attr].toString() !== newAttrs[attr].toString()) {
+      return true;
+    }
+  }
+
+  return false;
 }
