@@ -24,7 +24,6 @@ import _ from 'lodash';
 import { replace } from '../utils/dom';
 import { patcher } from './diff/patcher';
 import { Operation, OPERATIONS } from './diff';
-import { hasItemEffect } from '../utils/array';
 
 export interface UnknownIndex {
   [index: string]: unknown;
