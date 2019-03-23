@@ -1,7 +1,7 @@
 import { ROOT_ELEMENT_ID } from '../core/constant';
 import { VdomNode } from '../core';
 
-function getParentNode(dom: HTMLElement): HTMLElement {
+function getParentNode(dom: HTMLElement | Node): HTMLElement {
   let parent = dom.parentElement;
 
   if (!parent) {
@@ -12,13 +12,13 @@ function getParentNode(dom: HTMLElement): HTMLElement {
 }
 
 export function replace(originEle: HTMLElement, targetEle: HTMLElement) {
-  let parent = getParentNode(originEle);
+  let parent = getParentNode(targetEle);
 
   parent.replaceChild(targetEle, originEle);
 }
 
 export function add(
-  originEle: HTMLElement,
+  originEle: HTMLElement | Node,
   targetIndex: number,
   targets: VdomNode[]
 ) {
@@ -32,11 +32,11 @@ export function add(
       continue;
     }
 
-    parent.insertBefore(targetEl, child);
+    parent.insertBefore(targetEl.cloneNode(true), child);
   }
 }
 
-export function remove(originEle: HTMLElement, targetIndex: number[]) {
+export function remove(originEle: HTMLElement | Node, targetIndex: number[]) {
   let parent = getParentNode(originEle);
   let children = parent.children;
   let stashChildren = [];
@@ -47,12 +47,13 @@ export function remove(originEle: HTMLElement, targetIndex: number[]) {
   }
 
   for (let child of stashChildren) {
+    // console.info(child);
     parent.removeChild(child);
   }
 }
 
 export function move(
-  originEle: HTMLElement,
+  originEle: HTMLElement | Node,
   originIndex: number,
   targetIndex: number
 ) {
