@@ -4,20 +4,22 @@ import { VdomNode } from '../renderer';
 
 export type OPERATIONS = 'move' | 'add' | 'remove';
 
+type LayerDom = HTMLElement | Node;
+
 export interface MovePayload {
-  layerDom: HTMLElement;
+  layerDom: LayerDom;
   originIndex: number;
   targetIndex: number;
 }
 
 export interface AddPayload<T> {
-  layerDom: HTMLElement;
+  layerDom: LayerDom;
   targetIndex: number;
   targets: T[];
 }
 
 export interface RemovePayload {
-  layerDom: HTMLElement;
+  layerDom: LayerDom;
   targetIndexes: number[];
 }
 
@@ -60,7 +62,7 @@ export function add<T = VdomNode>(
     payload: {
       targetIndex,
       targets: [].concat(...(targets as any)),
-      layerDom: (vdomNode[targetIndex] as VdomNode).el!
+      layerDom: (vdomNode[targetIndex + 1] as VdomNode).el!
     }
   });
 }
