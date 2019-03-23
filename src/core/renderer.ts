@@ -24,6 +24,7 @@ import _ from 'lodash';
 import { replace } from '../utils/dom';
 import { patcher } from './diff/patcher';
 import { Operation, OPERATIONS } from './diff';
+import { hasItemEffect } from '../utils/array';
 
 export interface UnknownIndex {
   [index: string]: unknown;
@@ -31,8 +32,9 @@ export interface UnknownIndex {
 
 export interface VdomNode extends _Element {
   nextSibling?: VdomNode;
-  el?: HTMLElement;
+  el?: HTMLElement | Node;
   instance?: Component;
+  hasReRenderElement?: boolean;
 }
 
 export interface ChildrenInfo {
@@ -59,6 +61,8 @@ export class Renderer {
   private dom: Element | undefined;
   private renderQueue = new RenderQueue();
   private childrenTable: Map<any, ChildrenInfo> = new Map();
+  // 需要重新渲染 dom 的 节点
+  private elementRenderQueue: VdomNode[] = [];
   private a: any; // TODO：use template instead of
 
   private compare(oldVdom: VdomNode, newVdom: VdomNode) {
@@ -69,11 +73,6 @@ export class Renderer {
     const oldEl = oldVdom.el!;
     const newEl = newVdom.el!;
     const targetChildren = newVdom.children;
-
-    if (oldVdom.tagName !== newVdom.tagName) {
-      replace(oldEl, newEl);
-      return;
-    }
 
     if (oldEl && newEl) {
       let oldTextContent = getTextContent(oldVdom);
@@ -96,17 +95,12 @@ export class Renderer {
     }
   }
 
-  private updateRender(vdomNode: VdomNode, compareVNode?: VdomNode): VdomNode {
-    if (!vdomNode) {
+  private updateRender(vdomNode: VdomNode): VdomNode {
+    if (vdomNode === undefined) {
       return vdomNode;
     }
 
-    let originalVdom: VdomNode | undefined;
     let { instance, children } = vdomNode;
-
-    if (compareVNode) {
-      vdomNode = copyPropertyToVdom(vdomNode, compareVNode);
-    }
 
     if (instance && this.renderQueue.keys.includes(instance._key)) {
       let subComponents: VdomNode[] = [];
@@ -125,14 +119,10 @@ export class Renderer {
       }
 
       // 经过 h 出来原始的 vdom
-      originalVdom = instance.render();
-
-      vdomNode = copyPropertyToVdom(vdomNode, originalVdom);
-
-      // vdomNode = {
-      //   ...vdomNode,
-      //   ...
-      // };
+      vdomNode = {
+        ...vdomNode,
+        ...instance.render()
+      };
 
       let deferAttrs = this.renderQueue.getAttrs(_key);
 
@@ -155,7 +145,7 @@ export class Renderer {
           if (subComponent.instance && isPropsChange(oldAttrs, newAttrs)) {
             let _key = subComponent.instance._key;
             //set attrs defer
-            this.renderQueue.setAttrs(_key, oldAttrs);
+            this.renderQueue.setAttrs(_key, newAttrs);
             this.renderQueue.addKey(_key);
 
             // 实际注入新的值的执行逻辑
@@ -171,16 +161,12 @@ export class Renderer {
       });
 
       vdomNode.children = newChildren as ElementChildren;
+      vdomNode.hasReRenderElement = true;
     }
 
     vdomNode.children &&
       (vdomNode.children = vdomNode.children.map((child, index) =>
-        this.updateRender(
-          child as VdomNode,
-          originalVdom
-            ? (ToFlatArray(originalVdom.children)[index] as any)
-            : undefined
-        )
+        this.updateRender(child as VdomNode)
       ));
 
     return vdomNode;
@@ -196,9 +182,9 @@ export class Renderer {
 
     let newVdom = this.updateRender(_.cloneDeep(vdom));
 
-    this.parseVDomToElement(newVdom);
+    this.parseVDomToElement(newVdom, true);
+    this.vdom = newVdom;
     this.compare(vdom, newVdom);
-    // this.flush(this.dom!, this.parseVDomToElement(this.vdom));
   }
 
   private execChildren(children: ElementChildren): ElementChildren {
@@ -408,10 +394,12 @@ export class Renderer {
     return this.injectProperty(component, STATE_KEY, undefined);
   }
 
-  private parseVDomToElement(originEle: VdomNode): Element {
-    let { tagName, attrs, children } = originEle;
-
-    let el: HTMLElement & UnknownIndex = document.createElement(
+  private parseVDomToElement(
+    originEle: VdomNode,
+    hasReRender: boolean = false
+  ): Element | Node {
+    const { tagName, attrs, children } = originEle;
+    const el: HTMLElement & UnknownIndex = document.createElement(
       tagName as string
     );
 
@@ -433,10 +421,10 @@ export class Renderer {
 
       // 把子节点抽到扁平，提升性能
       for (let child of flatChildren) {
-        let childEle: Text | Element | null | undefined;
+        let childEle: Text | Element | null | undefined | Node;
 
-        if (typeof child !== 'object') {
-          childEle = document.createTextNode(child);
+        if (typeOf(child) === DATA_TYPE.STRING) {
+          childEle = document.createTextNode(child as string);
         } else {
           // 为 vdomNode 添加 nextSibling 属性方便层级遍历
           let nextSibling = flatChildren[flatChildren.indexOf(child) + 1];
@@ -445,15 +433,18 @@ export class Renderer {
             (child as any).nextSibling = nextSibling;
           }
 
-          childEle = this.parseVDomToElement(child as _Element);
+          childEle = this.parseVDomToElement(child as _Element, hasReRender);
         }
 
         el.appendChild(childEle);
       }
     }
 
-    // 把真实 dom 挂载到 virtual dom
-    originEle.el = el;
+    if (!hasReRender || (hasReRender && originEle.hasReRenderElement)) {
+      // 把真实 dom 挂载到 virtual dom
+      originEle.el = el;
+    }
+
     return el;
   }
 
@@ -471,7 +462,6 @@ export class Renderer {
 
     // 渲染真实 dom 节点
     this.a = this.parseVDomToElement(this.vdom);
-    // this.tpl.content.appendChild(this.parseVDomToElement(this.vdom));
   }
 
   bindDOM(dom: Element) {
@@ -487,24 +477,6 @@ function isSubComponent(child: ElementChild): boolean {
 
 function mapEventName(name: string) {
   return EventNames[name] || name;
-}
-
-function copyPropertyToVdom(vdom1: VdomNode, vdom2: VdomNode): VdomNode {
-  let result = { ...vdom1 };
-
-  if (vdom1.children && vdom2.children) {
-    result.children = vdom1.children.map((child, index) =>
-      typeOf(child) === DATA_TYPE.STRING ? vdom2.children[index] : child
-    );
-  }
-
-  if (typeOf(vdom2.tagName) !== DATA_TYPE.FUNCTION) {
-    result.tagName = vdom2.tagName;
-  }
-
-  result.attrs = vdom2.attrs;
-
-  return result;
 }
 
 function getTextContent(vdomNode: VdomNode): string {
