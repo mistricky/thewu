@@ -84,7 +84,14 @@ export function getLayerOfVdom(vdom: Vdom, layer: number): ElementChildren {
 }
 
 export function isPropsChange(oldAttrs: Attrs, newAttrs: Attrs): boolean {
-  for (let attr of Object.keys(newAttrs)) {
+  const newAttrsKeys = Object.keys(newAttrs);
+  const oldAttrsKeys = Object.keys(oldAttrs);
+
+  if (newAttrsKeys.length !== oldAttrsKeys.length) {
+    return false;
+  }
+
+  for (let attr of newAttrsKeys) {
     if (oldAttrs[attr].toString() !== newAttrs[attr].toString()) {
       return true;
     }
