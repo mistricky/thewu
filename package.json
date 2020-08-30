@@ -1,7 +1,7 @@
 {
   "name": "flat",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
     "start:example": "parcel ./example/index.html"
