@@ -1,52 +1,26 @@
-import { Renderer } from "./renderer";
-import { SystemHooks } from "./life-circle";
-import { Copy } from "../utils";
-
-export interface Attrs {
-  [index: string]: string;
-}
+// import { Renderer } from './renderer-backup';
+import { isFunction } from '../utils';
+import { JSXElement, Attrs, Renderer } from './renderer';
 
 export interface StateType {
   [index: string]: any;
 }
 
-export interface LifeCircleHook {
-  componentWillMount(): void;
-  componentDidMount(): void;
-}
-
-export interface Component extends LifeCircleHook, SystemHooks {
-  render(): _Element;
-  [index: string]: unknown;
-}
-
-export interface FlatComponentConstructor {
-  new (...args: unknown[]): Component;
-  [index: string]: unknown;
-}
-
-export type ElementChild =
-  | _Element
-  | Component
-  | string
-  | (_Element | string)[];
-export type ElementChildren = ElementChild[];
-
-export interface _Element {
-  tagName: string | Function | FlatComponentConstructor | Component;
-  attrs: Attrs;
-  children: ElementChildren;
-}
+// export type ElementChild =
+//   | JSXElement
+//   | Component
+//   | string
+//   | (JSXElement | string)[];
+// export type ElementChildren = ElementChild[];
 
 export class FlatElement {
-  private el: _Element;
-  private renderer: Renderer;
+  private renderEl: Element;
 
   static ele(
     tagName: string,
     attrs: Attrs,
-    children: ElementChildren
-  ): _Element {
+    children: JSXElement[]
+  ): JSXElement {
     return {
       tagName,
       attrs,
@@ -54,15 +28,22 @@ export class FlatElement {
     };
   }
 
-  constructor(el: unknown) {
-    this.el = Copy(el as _Element);
-    this.renderer = new Renderer();
-    this.renderer.render(this.el);
+  // is it a custom component
+  static isFlatComponent(jsx: JSXElement): boolean {
+    return isFunction(jsx.tagName);
+  }
+
+  constructor(el: JSX.Element) {
+    console.info(new (el as any).tagName().render());
+
+    this.renderEl = new Renderer(
+      (el as unknown) as JSXElement
+    ).renderToElement();
   }
 
   bindDOM(dom: Element | null) {
-    if (!dom) throw new Error("Cannot find element");
+    if (!dom) throw new Error('Cannot find element');
 
-    this.renderer.bindDOM(dom);
+    dom.appendChild(this.renderEl);
   }
 }
