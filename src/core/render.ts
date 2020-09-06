@@ -2,7 +2,7 @@ import { Injectable } from '@wizardoc/injector';
 import { patch } from 'incremental-dom';
 import { Compiler } from './compiler';
 import Flat from './h';
-import { STATE_KEY, COMPUTED_KEY } from './decorators';
+import { STATE_KEY, COMPUTED_KEY, PROP_KEY, CHILDREN_KEY } from './decorators';
 
 export interface GlobalData {
   [key: string]: any;
@@ -50,6 +50,8 @@ interface ParsedAttrsResult {
 export const STATE_BIND_PREFIX = 'state$$';
 export const COMPUTED_BIND_PREFIX = 'computed$$';
 export const FRAGMENT_TAGNAME = 'fragment';
+export const PROPS_NAME = 'props';
+export const CHILDREN_NAME = 'children';
 
 @Injectable()
 export class Render {
@@ -97,14 +99,12 @@ export class Render {
     const instance = this.InitCustomComponent(CustomComponent, props, children);
     const prototype = Object.getPrototypeOf(instance);
 
-    const getStateKey = (key: string) =>
-      Reflect.getMetadata(STATE_KEY, prototype, key);
-    const getComputedKey = (key: string) =>
-      Reflect.getMetadata(COMPUTED_KEY, prototype, key);
+    const getKeyFromMetadata = (symbol: Symbol, key: string) =>
+      Reflect.getMetadata(symbol, prototype, key);
 
     const proxyInstance = new Proxy(instance, {
       set: (target, key: string, val, receiver) => {
-        const stateKey = getStateKey(key);
+        const stateKey = getKeyFromMetadata(STATE_KEY, key);
 
         if (!!stateKey) {
           console.info(val);
@@ -121,8 +121,10 @@ export class Render {
       },
       get: (target, key: string, receiver) => {
         const val = Reflect.get(target, key, receiver);
-        const stateKey = getStateKey(key);
-        const computedKey = getComputedKey(key);
+        const stateKey = getKeyFromMetadata(STATE_KEY, key);
+        const computedKey = getKeyFromMetadata(COMPUTED_KEY, key);
+        const propName = getKeyFromMetadata(PROP_KEY, key);
+        const childrenKey = getKeyFromMetadata(CHILDREN_KEY, key);
 
         if (!!stateKey) {
           this.globalData[stateKey] = val;
@@ -130,8 +132,6 @@ export class Render {
           // the value start with $$ that represent bind to the state
           return this.isRendered ? val : `${STATE_BIND_PREFIX}${stateKey}`;
         }
-
-        console.info('invoke');
 
         // computed
         if (!!computedKey) {
@@ -141,6 +141,17 @@ export class Render {
           return this.isRendered
             ? val
             : `${COMPUTED_BIND_PREFIX}${computedKey}`;
+        }
+
+        // props
+        if (!!propName) {
+          const props = Reflect.get(target, PROPS_NAME, receiver);
+
+          return props[propName];
+        }
+
+        // children
+        if (!!childrenKey) {
         }
 
         // methods
@@ -156,8 +167,6 @@ export class Render {
 
     this.isRendered = true;
 
-    console.info('rendered');
-
     return renderComponent;
     // return {};
   }
@@ -169,8 +178,8 @@ export class Render {
   ) {
     const instance = new CustomComponent();
 
-    instance.props = { ...injectProps };
-    instance.children = Flat(FRAGMENT_TAGNAME, {}, ...injectChildren);
+    instance[PROPS_NAME] = { ...injectProps };
+    instance[CHILDREN_NAME] = Flat(FRAGMENT_TAGNAME, {}, ...injectChildren);
     // instance.prototype.hello = () => instance.dist;
 
     return instance;

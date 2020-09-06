@@ -1,10 +1,9 @@
-import "reflect-metadata";
-import { markProp } from "./@mark-prop";
+import 'reflect-metadata';
 
-export const PROP_KEY = Symbol("flat:prop");
+export const PROP_KEY = Symbol('flat:prop');
 
-export function Prop() {
+export function Prop(propName: string) {
   return function(target: any, key: string) {
-    markProp(target, key, PROP_KEY);
+    Reflect.defineMetadata(PROP_KEY, propName, target, key);
   };
 }
