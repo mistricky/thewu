@@ -1,49 +1,20 @@
 // import { Renderer } from './renderer-backup';
-import { isFunction } from '../utils';
-import { JSXElement, Attrs, Renderer } from './renderer';
+import { extract } from '@wizardoc/injector';
+import { Render } from './render';
+import { ParsedJSXElement } from './render';
 
 export interface StateType {
   [index: string]: any;
 }
 
-// export type ElementChild =
-//   | JSXElement
-//   | Component
-//   | string
-//   | (JSXElement | string)[];
-// export type ElementChildren = ElementChild[];
-
 export class FlatElement {
-  private renderEl: Element;
+  constructor(private vdom: JSX.Element) {}
 
-  static ele(
-    tagName: string,
-    attrs: Attrs,
-    children: JSXElement[]
-  ): JSXElement {
-    return {
-      tagName,
-      attrs,
-      children
-    };
-  }
+  bindDOM(dom: HTMLElement | null) {
+    if (!dom) {
+      throw new Error('Cannot find this element');
+    }
 
-  // is it a custom component
-  static isFlatComponent(jsx: JSXElement): boolean {
-    return isFunction(jsx.tagName);
-  }
-
-  constructor(el: JSX.Element) {
-    console.info(new (el as any).tagName().render());
-
-    this.renderEl = new Renderer(
-      (el as unknown) as JSXElement
-    ).renderToElement();
-  }
-
-  bindDOM(dom: Element | null) {
-    if (!dom) throw new Error('Cannot find element');
-
-    dom.appendChild(this.renderEl);
+    extract(Render).run(this.vdom as ParsedJSXElement, dom);
   }
 }

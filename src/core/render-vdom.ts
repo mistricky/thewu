@@ -6,14 +6,14 @@ export interface JSXElement {
   children: Children<JSXElement>;
 }
 
-interface ParsedJSXElement {
+export interface ParsedJSXElement {
   tagName: string;
   attrs: Attrs;
   children: Children<ParsedJSXElement>;
 }
 
 export interface FlatComponent {
-  render(): JSXElement;
+  render(): ParsedJSXElement;
   [index: string]: unknown;
 }
 
@@ -28,7 +28,7 @@ export interface Attrs {
 
 export type TagName = string | FlatComponentConstructor;
 
-export type Children<T> = string | (T | string)[];
+export type Children<T> = (T | string)[];
 
 interface Listeners {
   [name: string]: Function;
@@ -42,24 +42,14 @@ interface ParsedAttrsResult {
 const EVENT_PREFIX = '$';
 
 export class Renderer {
-  constructor(private root: JSXElement) {}
+  constructor(private root: ParsedJSXElement) {}
 
   renderToElement(): Element {
     return this.renderJSXToHTMLNode(this.root);
   }
 
-  private parseTagName(CustomComponent: FlatComponentConstructor): JSXElement {
-    // TODO: can inject some data to the constructor of component
-    // create instance of component
-    return new CustomComponent().render();
-  }
-
   // render the JSX element to HTML element
-  renderJSXToHTMLNode(JSXEl: JSXElement): Element {
-    const { tagName, children, attrs } = (isString(JSXEl.tagName)
-      ? JSXEl
-      : this.parseTagName(JSXEl.tagName)) as ParsedJSXElement;
-
+  renderJSXToHTMLNode({ tagName, attrs, children }: ParsedJSXElement): Element {
     const renderEl = document.createElement(tagName);
     const { parsedAttrs, listeners } = this.parseAttrs(attrs);
 

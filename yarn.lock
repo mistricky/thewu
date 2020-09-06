@@ -951,6 +951,13 @@
   resolved "https://registry.npm.taobao.org/@types/q/download/@types/q-1.5.4.tgz#15925414e0ad2cd765bfef58842f7e26a7accb24"
   integrity sha1-FZJUFOCtLNdlv+9YhC9+JqesyyQ=
 
+"@wizardoc/injector@^1.2.3":
+  version "1.2.3"
+  resolved "https://registry.npm.taobao.org/@wizardoc/injector/download/@wizardoc/injector-1.2.3.tgz#5d62eb6a7ae4f4dd8db7ba177219247b44d38a63"
+  integrity sha1-XWLranrk9N2Nt7oXchkke0TTimM=
+  dependencies:
+    reflect-metadata "^0.1.13"
+
 abab@^2.0.0:
   version "2.0.4"
   resolved "https://registry.npm.taobao.org/abab/download/abab-2.0.4.tgz?cache=0&sync_timestamp=1596256211934&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fabab%2Fdownload%2Fabab-2.0.4.tgz#6dfa57b417ca06d21b2478f0e638302f99c2405c"
@@ -2653,6 +2660,11 @@ import-fresh@^2.0.0:
   dependencies:
     caller-path "^2.0.0"
     resolve-from "^3.0.0"
+
+incremental-dom@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.npm.taobao.org/incremental-dom/download/incremental-dom-0.7.0.tgz#b03664731bdc430035f32df7d76fa56daedee9b8"
+  integrity sha1-sDZkcxvcQwA18y3312+lba7e6bg=
 
 indexes-of@^1.0.1:
   version "1.0.1"
