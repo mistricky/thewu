@@ -1,11 +1,5 @@
 import { Injectable } from '@wizardoc/injector';
-import { patch, key } from 'incremental-dom';
-import {
-  Compiler,
-  globalData,
-  StateListeners,
-  globalStateListeners
-} from './compiler';
+import { globalData, globalStateListeners, Runtime } from './compiler';
 import Flat from './h';
 import {
   STATE_KEY,
@@ -16,7 +10,7 @@ import {
   ComponentMetaData,
   ComponentDecoratorOptions
 } from './decorators';
-import { listeners } from 'process';
+import { isString } from '../utils';
 
 export interface JSXElement {
   tagName: TagName;
@@ -50,13 +44,9 @@ export type TagName = string | FlatComponentConstructor;
 
 export type Children<T> = (T | string)[];
 
-export type UpdateFn = () => void;
+export type UpdateFn = (changeStateName?: string) => void;
 
 type GetKeyFromMetadata = (symbol: Symbol, key: string) => any;
-
-interface PrepareAttrsRes {
-  stateListeners: StateListeners;
-}
 
 interface Listeners {
   [name: string]: Function;
@@ -77,7 +67,6 @@ export const CHILDREN_NAME = 'children';
 export class Render {
   private _vdom?: ParsedJSXElement;
   private _rootDOM?: HTMLElement;
-  private isRendered = false;
   private update!: UpdateFn;
 
   private get vdom() {
@@ -101,21 +90,19 @@ export class Render {
     this._vdom = vdom;
     this._rootDOM = dom;
 
-    const compiler = new Compiler(this.vdom);
-    const elementGenerators = compiler.walk();
+    console.info(Runtime);
+
+    const runtime = new Runtime(this.vdom);
 
     // init update fn
-    this.update = () =>
-      patch(this.rootDOM, () => {
-        elementGenerators
-          .flat(Number.POSITIVE_INFINITY)
-          .map(generator => generator());
-      });
+    this.update = (changeStateName?: string) => {
+      runtime.update(this.rootDOM, changeStateName);
+    };
 
     this.update();
 
     // mounted
-    compiler.initDirectives();
+    runtime.initDirectives();
   }
 
   renderComponent(
@@ -139,6 +126,7 @@ export class Render {
     const { id, options } = payload;
     const componentID = this.initComponentDataScope(
       instance,
+      prototype,
       id,
       getKeyFromMetadata
     );
@@ -151,7 +139,7 @@ export class Render {
           globalData[componentID][key] = val;
 
           // trigger update and render when set state of the component
-          window.requestIdleCallback(() => this.update());
+          window.requestIdleCallback(() => this.update(key));
           // listeners of states, invoke when the state was changed
           // execute listeners
           this.executeStateListeners(componentID, key);
@@ -206,8 +194,6 @@ export class Render {
 
     const renderComponent = proxyInstance.render();
 
-    this.isRendered = true;
-
     return { ...renderComponent, componentID, options };
   }
 
@@ -219,22 +205,25 @@ export class Render {
 
   private initComponentDataScope(
     instance: any,
+    prototype: any,
     id: string,
     getKeyFromMetadata: GetKeyFromMetadata
   ): string {
     //use component as scope of data
     // init data of the component
-    globalData[id] = {};
+    globalData[id] = { instance, prototype };
 
-    for (const name of Object.keys(instance)) {
+    for (const name of [
+      ...Object.keys(instance),
+      ...Reflect.ownKeys(prototype)
+    ]) {
       // pre store states and computed into global data
       if (
-        !!getKeyFromMetadata(STATE_KEY, name) ||
-        !!getKeyFromMetadata(COMPUTED_KEY, name)
+        isString(name) &&
+        (!!getKeyFromMetadata(STATE_KEY, name) ||
+          !!getKeyFromMetadata(COMPUTED_KEY, name))
       ) {
         globalData[id][name] = instance[name];
-
-        continue;
       }
     }
 

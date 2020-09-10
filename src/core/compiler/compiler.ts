@@ -1,11 +1,7 @@
 import { elementVoid, elementOpen, elementClose, text } from 'incremental-dom';
-import { ParsedJSXElement, Attrs } from './render';
-import { isString, isFunction, typeOf } from '../utils';
-import { STATE_BIND_PREFIX } from './render';
-import { Dict } from '../typings/utils';
-import { parse } from '@babel/parser';
-import traverse from '@babel/traverse';
-import { transformFromAst } from '@babel/core';
+import { ParsedJSXElement, Attrs } from '../render';
+import { isString, isFunction, typeOf } from '../../utils';
+import { Dict } from '../../typings/utils';
 import vm from 'vm';
 import { generate } from 'shortid';
 import {
@@ -16,10 +12,10 @@ import {
   StructureDirective,
   IDirective,
   isPropertyDirective
-} from './directive';
-import { ComponentDecoratorOptions } from './decorators';
+} from '../directive';
+import { ComponentDecoratorOptions } from '../decorators';
 
-export type ElementGenerator = () => Element;
+export type ElementGenerator = (changeStateName?: string) => Element;
 export type ElementGenerators = (ElementGenerators | ElementGenerator)[];
 export type StateListeners = Dict<(() => void)[]>;
 
@@ -42,8 +38,10 @@ export class Compiler {
 
   constructor(private root: ParsedJSXElement) {}
 
-  walk(): ElementGenerators {
-    return this.compileJSXToIncremental(this.root);
+  walk() {
+    return this.compileJSXToIncremental(this.root).flat(
+      Number.POSITIVE_INFINITY
+    );
   }
 
   private compileJSXToIncremental(vdom: ParsedJSXElement) {
@@ -80,10 +78,40 @@ export class Compiler {
     children
   }: ParsedJSXElement): any {
     const parsedAttrs = this.parseAttrs(attrs);
+    const dependencyData = children.map(child => {
+      if (!child || !isString(child)) {
+        return undefined;
+      }
 
+      const result = child.match(/%([^%]+)%/g);
+
+      if (!result) {
+        return {
+          depStates: [],
+          valueUpdater: () => child,
+          value: child
+        };
+      }
+
+      const depStates = result
+        .map(expr => this.findDependencyStates(expr.replace(/%/g, '')))
+        .flat();
+      const value = () =>
+        child.replace(/%([^%]*)%/g, (_, expr) => this.computeExpression(expr));
+
+      return {
+        depStates,
+        valueUpdater: () => value(),
+        value: value()
+      };
+    });
+
+    // console.info(dependencyData);
+
+    // runtime
     return [
       () => elementOpen(tagName, null, null, ...parsedAttrs),
-      children.map(child => {
+      children.map((child, i) => {
         if (!child) {
           return;
         }
@@ -92,8 +120,18 @@ export class Compiler {
           return this.compileJSXToIncremental(child);
         }
 
-        // the value probably has bind to state
-        return this.parseDynamicContent(child);
+        const data = dependencyData[i]!;
+
+        return (changeStateName?: string) => {
+          // update value when depState has been changed
+          if (data.depStates.includes(changeStateName ?? '')) {
+            data.value = data.valueUpdater();
+
+            return text(data.value);
+          }
+
+          return text(data.value);
+        };
       }),
       () => elementClose(tagName)
     ];
@@ -109,33 +147,6 @@ export class Compiler {
       }),
       {}
     );
-  }
-
-  private parseDynamicContent(child: string) {
-    return () =>
-      text(
-        child.replace(/%([^%]*)%/g, (_, expr) => this.computeExpression(expr))
-      );
-
-    // const DYNAMIC_PREFIX = /^.+\$\$/;
-
-    // if (!DYNAMIC_PREFIX.test(child)) {
-    //   return text(child);
-    // }
-
-    // const dynamicData = this.globalData[child.replace(DYNAMIC_PREFIX, '')];
-
-    // if (dynamicData === undefined) {
-    //   return text(child);
-    // }
-
-    // // parse computed
-    // if (isFunction(dynamicData)) {
-    //   return text(dynamicData());
-    // }
-
-    // // normal dynamic data
-    // return text(this.globalData[dynamicData]);
   }
 
   private parseAttrs(attrs: Attrs): string[] {
@@ -216,7 +227,6 @@ export class Compiler {
         continue;
       }
 
-      // TODO: handing $$ prop
       flatAttrs.push(name, attrVal);
     }
 
@@ -261,12 +271,13 @@ export class Compiler {
   }
 
   private computeExpression(expr: string) {
+    console.info('computed!!!');
+
+    const { instance, prototype } = this.componentGlobalData;
     let res: any;
 
-    // console.info(this.componentGlobalData);
-
     try {
-      res = vm.runInNewContext(`res = ${expr}`, this.componentGlobalData ?? {});
+      res = vm.runInNewContext(`res = ${expr}`, { ...prototype, ...instance });
     } catch (e) {
       throw new Error(`Unexpected expression: ${expr}`);
     }
@@ -291,7 +302,7 @@ export class Compiler {
         const stateName = matches[1];
         const stateVal = this.componentGlobalData[stateName];
 
-        if (!stateVal) {
+        if (stateVal === undefined) {
           throw new Error(`Cannot find the variable ${stateName}`);
         }
 
