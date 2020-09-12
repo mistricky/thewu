@@ -1,4 +1,5 @@
 import { IDirective } from '../directive';
+import { generate } from 'shortid';
 
 export const COMPONENT_KEY = Symbol('flat:component');
 
@@ -17,7 +18,7 @@ export function Component(options?: Partial<ComponentDecoratorOptions>) {
   return (target: any) => {
     Reflect.defineMetadata(
       COMPONENT_KEY,
-      { options: parsedOptions, id: `${target.name}|${Date.now()}` },
+      { options: parsedOptions, id: `_${generate()}` },
       target
     );
   };

@@ -53,17 +53,15 @@ export type Children<T> = (T | string)[];
 
 export type UpdateFn = (changeStateNames?: string[]) => void;
 
-interface DepListenerResult {
-  [name: string]: unknown;
-}
-
+type DepListenerResult = Dict<unknown>;
 type DepListener = () => DepListenerResult;
-
-interface StateDepListeners {
-  [name: string]: DepListener[];
-}
+type StateDepListeners = Dict<Dict<DepListener[]>>;
 
 const statesDepListeners: StateDepListeners = {};
+
+type StateDepNames = Dict<Dict<string[]>>;
+
+const stateDepNames: StateDepNames = {};
 
 export const FRAGMENT_TAGNAME = 'fragment';
 export const PROPS_NAME = 'props';
@@ -150,7 +148,7 @@ export class Render {
 
           const changedData = Object.assign(
             {},
-            ...statesDepListeners[key].map(fn => fn())
+            ...statesDepListeners[id][key].map(fn => fn())
           );
 
           // update data for render (side effect)
@@ -179,10 +177,19 @@ export class Render {
         const childrenKey = getKeyFromMetadata(CHILDREN_KEY, key);
 
         // during dep collection
-        if (!!this.currentCollectFn && this.currentCollectFn.key !== key) {
-          (statesDepListeners[key] ?? (statesDepListeners[key] = [])).push(
-            this.currentCollectFn.fn
-          );
+        if (
+          !!this.currentCollectFn &&
+          this.currentCollectFn.key !== key &&
+          !stateDepNames[id][this.currentCollectFn.key]?.includes(key)
+        ) {
+          (
+            statesDepListeners[id][key] ?? (statesDepListeners[id][key] = [])
+          ).push(this.currentCollectFn.fn);
+
+          (
+            stateDepNames[id][this.currentCollectFn.key] ??
+            (stateDepNames[id][this.currentCollectFn.key] = [])
+          ).push(key);
         }
 
         // if (!!stateKey) {
@@ -220,6 +227,8 @@ export class Render {
 
     this.initComponentDataScope(proxyInstance, prototype, id);
 
+    console.info(stateDepNames);
+
     // life-circle invoke here
     //////////////////////////
     const renderComponent = proxyInstance.render();
@@ -240,6 +249,8 @@ export class Render {
     ] as string[];
     // init data of the component
     globalData[id] = {};
+    statesDepListeners[id] = {};
+    stateDepNames[id] = {};
 
     for (const key of keys) {
       if (SYS_INNER_PROP_NAMES.includes(key)) {
