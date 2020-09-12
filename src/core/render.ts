@@ -10,7 +10,9 @@ import {
   ComponentMetaData,
   ComponentDecoratorOptions
 } from './decorators';
-import { isString } from '../utils';
+import { isFunction } from '../utils';
+import { Dict } from '../typings/utils';
+import { key } from 'incremental-dom';
 
 export interface JSXElement {
   tagName: TagName;
@@ -40,34 +42,48 @@ export interface Attrs {
   [index: string]: any;
 }
 
+interface CurrentCollectInfo {
+  key: string;
+  fn: () => DepListenerResult;
+}
+
 export type TagName = string | FlatComponentConstructor;
 
 export type Children<T> = (T | string)[];
 
-export type UpdateFn = (changeStateName?: string) => void;
+export type UpdateFn = (changeStateNames?: string[]) => void;
 
-type GetKeyFromMetadata = (symbol: Symbol, key: string) => any;
-
-interface Listeners {
-  [name: string]: Function;
+interface DepListenerResult {
+  [name: string]: unknown;
 }
 
-interface ParsedAttrsResult {
-  parsedAttrs: Attrs;
-  listeners: Listeners;
+type DepListener = () => DepListenerResult;
+
+interface StateDepListeners {
+  [name: string]: DepListener[];
 }
 
-export const STATE_BIND_PREFIX = 'state$$';
-export const COMPUTED_BIND_PREFIX = 'computed$$';
+const statesDepListeners: StateDepListeners = {};
+
 export const FRAGMENT_TAGNAME = 'fragment';
 export const PROPS_NAME = 'props';
 export const CHILDREN_NAME = 'children';
+const RENDER_NAME = 'render';
+
+const SYS_INNER_PROP_NAMES = [
+  PROPS_NAME,
+  CHILDREN_NAME,
+  RENDER_NAME,
+  'constructor'
+];
 
 @Injectable()
 export class Render {
   private _vdom?: ParsedJSXElement;
   private _rootDOM?: HTMLElement;
   private update!: UpdateFn;
+
+  private currentCollectFn: CurrentCollectInfo | undefined;
 
   private get vdom() {
     if (!this._vdom) {
@@ -90,13 +106,11 @@ export class Render {
     this._vdom = vdom;
     this._rootDOM = dom;
 
-    console.info(Runtime);
-
     const runtime = new Runtime(this.vdom);
 
     // init update fn
-    this.update = (changeStateName?: string) => {
-      runtime.update(this.rootDOM, changeStateName);
+    this.update = (changeStateNames?: string[]) => {
+      runtime.update(this.rootDOM, changeStateNames);
     };
 
     this.update();
@@ -112,6 +126,7 @@ export class Render {
   ): ParsedJSXElement {
     const instance = this.initCustomComponent(CustomComponent, props, children);
     const prototype = Object.getPrototypeOf(instance);
+
     const payload = Reflect.getMetadata(
       COMPONENT_KEY,
       CustomComponent
@@ -124,27 +139,34 @@ export class Render {
     }
 
     const { id, options } = payload;
-    const componentID = this.initComponentDataScope(
-      instance,
-      prototype,
-      id,
-      getKeyFromMetadata
-    );
 
     const proxyInstance = new Proxy(instance, {
       set: (target, key: string, val, receiver) => {
-        // const stateKey = getKeyFromMetadata(STATE_KEY, key);
+        const stateKey = getKeyFromMetadata(STATE_KEY, key);
 
-        if (globalData[componentID][key] !== undefined) {
-          globalData[componentID][key] = val;
+        // only change states can trigger update
+        if (!!stateKey) {
+          Reflect.set(target, key, val, receiver);
+
+          const changedData = Object.assign(
+            {},
+            ...statesDepListeners[key].map(fn => fn())
+          );
+
+          // update data for render (side effect)
+          Object.assign(globalData[id], changedData, { [key]: val });
+
+          const changedDataKeys = Object.keys(changedData);
+
+          changedDataKeys.push(key);
 
           // trigger update and render when set state of the component
-          window.requestIdleCallback(() => this.update(key));
+          window.requestIdleCallback(() => this.update(changedDataKeys));
           // listeners of states, invoke when the state was changed
           // execute listeners
-          this.executeStateListeners(componentID, key);
+          this.executeStateListeners(id, key);
 
-          return Reflect.set(target, key, val, receiver);
+          return true;
         }
 
         return Reflect.set(target, key, val, receiver);
@@ -155,6 +177,13 @@ export class Render {
         const computedKey = getKeyFromMetadata(COMPUTED_KEY, key);
         const propName = getKeyFromMetadata(PROP_KEY, key);
         const childrenKey = getKeyFromMetadata(CHILDREN_KEY, key);
+
+        // during dep collection
+        if (!!this.currentCollectFn && this.currentCollectFn.key !== key) {
+          (statesDepListeners[key] ?? (statesDepListeners[key] = [])).push(
+            this.currentCollectFn.fn
+          );
+        }
 
         // if (!!stateKey) {
         //   this.globalData[stateKey] = val;
@@ -189,12 +218,13 @@ export class Render {
       }
     });
 
+    this.initComponentDataScope(proxyInstance, prototype, id);
+
     // life-circle invoke here
     //////////////////////////
-
     const renderComponent = proxyInstance.render();
 
-    return { ...renderComponent, componentID, options };
+    return { ...renderComponent, componentID: id, options };
   }
 
   private executeStateListeners(componentID: string, stateName: string) {
@@ -203,31 +233,37 @@ export class Render {
     }
   }
 
-  private initComponentDataScope(
-    instance: any,
-    prototype: any,
-    id: string,
-    getKeyFromMetadata: GetKeyFromMetadata
-  ): string {
-    //use component as scope of data
+  private initComponentDataScope(instance: any, prototype: any, id: string) {
+    const keys = [
+      ...Reflect.ownKeys(prototype),
+      ...Object.keys(instance)
+    ] as string[];
     // init data of the component
-    globalData[id] = { instance, prototype };
+    globalData[id] = {};
 
-    for (const name of [
-      ...Object.keys(instance),
-      ...Reflect.ownKeys(prototype)
-    ]) {
-      // pre store states and computed into global data
-      if (
-        isString(name) &&
-        (!!getKeyFromMetadata(STATE_KEY, name) ||
-          !!getKeyFromMetadata(COMPUTED_KEY, name))
-      ) {
-        globalData[id][name] = instance[name];
+    for (const key of keys) {
+      if (SYS_INNER_PROP_NAMES.includes(key)) {
+        continue;
       }
-    }
 
-    return id;
+      globalData[id][key] = instance[key];
+
+      if (Reflect.getMetadata(STATE_KEY, prototype, key)) {
+        continue;
+      }
+
+      if (isFunction(instance[key])) {
+        // fn = (...args: unknown[]) => instance[key](...args);
+        continue;
+      }
+
+      const fn = () => ({ [key]: instance[key] });
+
+      // collect dep begin
+      this.currentCollectFn = { fn, key };
+      fn();
+      this.currentCollectFn = undefined;
+    }
   }
 
   private initCustomComponent(

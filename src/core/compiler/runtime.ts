@@ -16,9 +16,9 @@ export class Runtime {
     this.compiler.initDirectives();
   }
 
-  update(dom: HTMLElement, changeStateName?: string) {
+  update(dom: HTMLElement, changeStateNames?: string[]) {
     patch(dom, () => {
-      this.lazyNodes.map(generator => generator(changeStateName));
+      this.lazyNodes.map(generator => generator(changeStateNames ?? []));
     });
   }
 }

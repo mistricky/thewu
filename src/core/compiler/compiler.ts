@@ -15,7 +15,7 @@ import {
 } from '../directive';
 import { ComponentDecoratorOptions } from '../decorators';
 
-export type ElementGenerator = (changeStateName?: string) => Element;
+export type ElementGenerator = (changeStateNames: string[]) => Element;
 export type ElementGenerators = (ElementGenerators | ElementGenerator)[];
 export type StateListeners = Dict<(() => void)[]>;
 
@@ -106,8 +106,6 @@ export class Compiler {
       };
     });
 
-    // console.info(dependencyData);
-
     // runtime
     return [
       () => elementOpen(tagName, null, null, ...parsedAttrs),
@@ -122,12 +120,14 @@ export class Compiler {
 
         const data = dependencyData[i]!;
 
-        return (changeStateName?: string) => {
+        return (changeStateNames: string[]) => {
           // update value when depState has been changed
-          if (data.depStates.includes(changeStateName ?? '')) {
-            data.value = data.valueUpdater();
+          for (const changedStateName of changeStateNames) {
+            if (data.depStates.includes(changedStateName)) {
+              data.value = data.valueUpdater();
 
-            return text(data.value);
+              return text(data.value);
+            }
           }
 
           return text(data.value);
@@ -138,15 +138,15 @@ export class Compiler {
   }
 
   private get componentGlobalData(): Dict {
-    const data = globalData[this.currentRenderComponentID ?? ''] ?? {};
+    return globalData[this.currentRenderComponentID ?? ''] ?? {};
 
-    return Object.keys(data).reduce(
-      (pre, name) => ({
-        ...pre,
-        [name]: isFunction(data[name]) ? (data[name] as Function)() : data[name]
-      }),
-      {}
-    );
+    // return Object.keys(data).reduce(
+    //   (pre, name) => ({
+    //     ...pre,
+    //     [name]: isFunction(data[name]) ? (data[name] as Function)() : data[name]
+    //   }),
+    //   {}
+    // );
   }
 
   private parseAttrs(attrs: Attrs): string[] {
@@ -154,8 +154,6 @@ export class Compiler {
     const flatAttrs: string[] = ['id', elementID];
     const findDirective = (name: string) => {
       let result: FindDirectiveRes | undefined;
-
-      console.info('parseAttrs');
 
       for (const directive of (
         this.currentRenderComponentOptions ?? { directives: [] }
@@ -242,8 +240,6 @@ export class Compiler {
     const stateNames = this.findDependencyStates(rawVal);
     const directive = new (Directive as any)();
 
-    console.info(stateNames);
-
     const registerStateObserver = (listener: () => void) => {
       for (const name of stateNames) {
         const listeners =
@@ -271,13 +267,10 @@ export class Compiler {
   }
 
   private computeExpression(expr: string) {
-    console.info('computed!!!');
-
-    const { instance, prototype } = this.componentGlobalData;
     let res: any;
 
     try {
-      res = vm.runInNewContext(`res = ${expr}`, { ...prototype, ...instance });
+      res = vm.runInNewContext(`res = ${expr}`, this.componentGlobalData);
     } catch (e) {
       throw new Error(`Unexpected expression: ${expr}`);
     }

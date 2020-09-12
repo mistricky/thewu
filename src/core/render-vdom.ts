@@ -58,8 +58,6 @@ export class Renderer {
       renderEl.addEventListener(name as any, listeners[name] as any);
     }
 
-    console.info(parsedAttrs);
-
     for (const attrName of Object.keys(parsedAttrs)) {
       renderEl.setAttribute(attrName, parsedAttrs[attrName]);
     }
