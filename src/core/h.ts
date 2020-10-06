@@ -9,6 +9,7 @@ import {
 } from './render';
 import { Render } from './render';
 import { extract } from '@wizardoc/injector';
+import { Dict } from '../typings/utils';
 
 type ChildrenType<T> = T extends (infer U)[] ? U : T;
 
@@ -36,4 +37,8 @@ export default function Flat(
     attrs: attrs || {},
     children
   };
+}
+
+export function isJSXElement(obj: any): obj is ParsedJSXElement {
+  return !!obj.tagName;
 }
