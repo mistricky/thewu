@@ -1,5 +1,5 @@
 import { Injectable } from '@wizardoc/injector';
-import { globalData, globalStateListeners, Runtime } from './compiler';
+import { Runtime } from './compiler';
 import Flat from './h';
 import {
   STATE_KEY,
@@ -12,7 +12,7 @@ import {
 } from './decorators';
 import { isFunction } from '../utils';
 import { Dict } from '../typings/utils';
-import { key } from 'incremental-dom';
+import { globalData, globalStateListeners } from './global-data';
 
 export interface JSXElement {
   tagName: TagName;
@@ -66,6 +66,7 @@ const stateDepNames: StateDepNames = {};
 export const FRAGMENT_TAGNAME = 'fragment';
 export const PROPS_NAME = 'props';
 export const CHILDREN_NAME = 'children';
+export const INNER_INSTANCE_NAME = '$instance';
 const RENDER_NAME = 'render';
 
 const SYS_INNER_PROP_NAMES = [
@@ -148,7 +149,7 @@ export class Render {
 
           const changedData = Object.assign(
             {},
-            ...statesDepListeners[id][key].map(fn => fn())
+            ...(statesDepListeners[id][key] ?? []).map(fn => fn())
           );
 
           // update data for render (side effect)
@@ -220,14 +221,13 @@ export class Render {
         }
 
         // methods
-
         return val;
       }
     });
 
     this.initComponentDataScope(proxyInstance, prototype, id);
 
-    console.info(stateDepNames);
+    globalData[id][INNER_INSTANCE_NAME] = proxyInstance;
 
     // life-circle invoke here
     //////////////////////////

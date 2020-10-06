@@ -1,5 +1,5 @@
 import { elementVoid, elementOpen, elementClose, text } from 'incremental-dom';
-import { ParsedJSXElement, Attrs } from '../render';
+import { ParsedJSXElement, Attrs, INNER_INSTANCE_NAME } from '../render';
 import { isString, isFunction, typeOf } from '../../utils';
 import { Dict } from '../../typings/utils';
 import vm from 'vm';
@@ -13,18 +13,12 @@ import {
   IDirective,
   isPropertyDirective
 } from '../directive';
-import { ComponentDecoratorOptions } from '../decorators';
+import { globalData, globalStateListeners } from '../global-data';
+import { CompileInfoStack } from './compile-info-stack';
 
 export type ElementGenerator = (changeStateNames: string[]) => Element;
 export type ElementGenerators = (ElementGenerators | ElementGenerator)[];
 export type StateListeners = Dict<(() => void)[]>;
-
-type ComponentScopeGlobalData = Dict<unknown | Function>;
-
-export type GlobalData = Dict<ComponentScopeGlobalData>;
-
-export const globalData: GlobalData = {};
-export const globalStateListeners: Dict<StateListeners> = {};
 
 interface FindDirectiveRes {
   directive: IDirective;
@@ -32,29 +26,23 @@ interface FindDirectiveRes {
 }
 
 export class Compiler {
-  private currentRenderComponentID?: string;
-  private currentRenderComponentOptions?: ComponentDecoratorOptions;
+  private compileStack = new CompileInfoStack();
   private directiveObservers: Function[] = [];
 
   constructor(private root: ParsedJSXElement) {}
 
   walk() {
-    return this.compileJSXToIncremental(this.root).flat(
-      Number.POSITIVE_INFINITY
+    return (
+      this.compileJSXToIncremental(this.root)
+        // .filter((generator: any) => !!generator)
+        .flat(Number.POSITIVE_INFINITY)
     );
   }
 
   private compileJSXToIncremental(vdom: ParsedJSXElement) {
-    const { children, componentID, options } = vdom;
+    const { children } = vdom;
 
-    if (componentID) {
-      this.currentRenderComponentID = componentID;
-      globalStateListeners[componentID] = {};
-    }
-
-    if (options) {
-      this.currentRenderComponentOptions = options;
-    }
+    this.compileStack.push(vdom);
 
     if (!children || !children.length) {
       return this.transformElementVoidNode(vdom);
@@ -115,7 +103,15 @@ export class Compiler {
         }
 
         if (!isString(child)) {
-          return this.compileJSXToIncremental(child);
+          const result = this.compileJSXToIncremental(child);
+
+          if (!child.componentID) {
+            return result;
+          }
+
+          this.compileStack.pop();
+
+          return result;
         }
 
         const data = dependencyData[i]!;
@@ -137,16 +133,12 @@ export class Compiler {
     ];
   }
 
-  private get componentGlobalData(): Dict {
-    return globalData[this.currentRenderComponentID ?? ''] ?? {};
+  private get currentCompileInfo() {
+    return this.compileStack.currentInfo;
+  }
 
-    // return Object.keys(data).reduce(
-    //   (pre, name) => ({
-    //     ...pre,
-    //     [name]: isFunction(data[name]) ? (data[name] as Function)() : data[name]
-    //   }),
-    //   {}
-    // );
+  private get componentGlobalData(): Dict {
+    return globalData[this.currentCompileInfo.id ?? ''] ?? {};
   }
 
   private parseAttrs(attrs: Attrs): string[] {
@@ -156,7 +148,7 @@ export class Compiler {
       let result: FindDirectiveRes | undefined;
 
       for (const directive of (
-        this.currentRenderComponentOptions ?? { directives: [] }
+        this.currentCompileInfo.options ?? { directives: [] }
       ).directives) {
         const directiveOptions = Reflect.getMetadata(
           DIRECTIVE_KEY,
@@ -180,14 +172,12 @@ export class Compiler {
       return result;
     };
 
+    const { id, options } = this.currentCompileInfo;
+
     for (const name of Object.keys(attrs ?? {})) {
       const attrVal = attrs[name];
 
-      if (
-        name.startsWith(DIRECTIVE_PREFIX) &&
-        this.currentRenderComponentOptions &&
-        this.currentRenderComponentID
-      ) {
+      if (name.startsWith(DIRECTIVE_PREFIX) && id && options) {
         const result = findDirective(name);
 
         if (!result) {
@@ -236,19 +226,17 @@ export class Compiler {
     name: string,
     rawVal: string,
     Directive: PropertyDirective | StructureDirective
-  ): StateListeners {
+  ) {
+    const { id: componentID } = this.currentCompileInfo;
     const stateNames = this.findDependencyStates(rawVal);
     const directive = new (Directive as any)();
+    const scopeData = globalStateListeners[componentID!];
 
     const registerStateObserver = (listener: () => void) => {
       for (const name of stateNames) {
-        const listeners =
-          globalStateListeners[this.currentRenderComponentID!][name];
+        const listeners = scopeData[name];
 
-        globalStateListeners[this.currentRenderComponentID!][name] = [
-          ...(listeners ?? []),
-          listener
-        ];
+        scopeData[name] = [...(listeners ?? []), listener];
       }
     };
 
@@ -256,14 +244,21 @@ export class Compiler {
       const listener = () =>
         directive.onPropertyObserve(
           document.getElementById(id)!,
-          this.computeExpression(rawVal)
+          this.computeExpression(rawVal),
+          {
+            updateInstance: setData => {
+              Object.assign(
+                globalData[componentID!][INNER_INSTANCE_NAME] as object,
+                setData
+              );
+            },
+            computeExpression: expr => this.computeExpression(expr)
+          }
         );
 
       this.directiveObservers.push(listener);
       registerStateObserver(listener);
     }
-
-    return {};
   }
 
   private computeExpression(expr: string) {
