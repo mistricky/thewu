@@ -1,3 +1,4 @@
+import { Dict } from '../typings/utils';
 import { DataType } from '../utils';
 
 export const DIRECTIVE_PREFIX = '$';
@@ -8,7 +9,12 @@ export interface IDirective {}
 export interface StructureDirective extends IDirective {}
 
 export interface PropertyDirective extends IDirective {
-  onPropertyObserve(el: HTMLElement, value: any): void;
+  onPropertyObserve(el: HTMLElement, value: any, utils: DirectiveUtils): void;
+}
+
+export interface DirectiveUtils {
+  updateInstance(setData: Dict): void;
+  computeExpression(expr: string): any;
 }
 
 export interface DirectiveOptions {
