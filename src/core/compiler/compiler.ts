@@ -1,32 +1,21 @@
 import { elementVoid, elementOpen, elementClose, text } from 'incremental-dom';
-import { ParsedJSXElement, Attrs, INNER_INSTANCE_NAME } from '../render';
-import { isString, isFunction, typeOf } from '../../utils';
+import { ParsedJSXElement, Attrs } from '../render';
+import { isString } from '../../utils';
 import { Dict } from '../../typings/utils';
-import vm from 'vm';
 import { generate } from 'shortid';
-import {
-  DIRECTIVE_PREFIX,
-  DIRECTIVE_KEY,
-  DirectiveOptions,
-  PropertyDirective,
-  StructureDirective,
-  IDirective,
-  isPropertyDirective
-} from '../directive';
-import { globalData, globalStateListeners } from '../global-data';
+import { DIRECTIVE_PREFIX } from '../directive';
+import { globalData } from '../global-data';
 import { CompileInfoStack } from './compile-info-stack';
+import { VM } from './vm';
+import { DirectiveCompiler } from './directive-compiler';
 
 export type ElementGenerator = (changeStateNames: string[]) => Element;
 export type ElementGenerators = (ElementGenerators | ElementGenerator)[];
 export type StateListeners = Dict<(() => void)[]>;
 
-interface FindDirectiveRes {
-  directive: IDirective;
-  options: DirectiveOptions;
-}
-
 export class Compiler {
   private compileStack = new CompileInfoStack();
+  private vm = new VM();
   private directiveObservers: Function[] = [];
 
   constructor(private root: ParsedJSXElement) {}
@@ -82,10 +71,17 @@ export class Compiler {
       }
 
       const depStates = result
-        .map(expr => this.findDependencyStates(expr.replace(/%/g, '')))
+        .map(expr =>
+          this.vm.findDependencyStates(
+            expr.replace(/%/g, ''),
+            this.componentGlobalData
+          )
+        )
         .flat();
       const value = () =>
-        child.replace(/%([^%]*)%/g, (_, expr) => this.computeExpression(expr));
+        child.replace(/%([^%]*)%/g, (_, expr) =>
+          this.vm.computeExpression(expr, this.componentGlobalData)
+        );
 
       return {
         depStates,
@@ -144,73 +140,22 @@ export class Compiler {
   private parseAttrs(attrs: Attrs): string[] {
     const elementID = generate();
     const flatAttrs: string[] = ['id', elementID];
-    const findDirective = (name: string) => {
-      let result: FindDirectiveRes | undefined;
-
-      for (const directive of (
-        this.currentCompileInfo.options ?? { directives: [] }
-      ).directives) {
-        const directiveOptions = Reflect.getMetadata(
-          DIRECTIVE_KEY,
-          directive
-        ) as DirectiveOptions;
-
-        if (!directiveOptions) {
-          throw new Error(
-            'Cannot find the directive, please make sure you use the @Directive decorator'
-          );
-        }
-
-        if (directiveOptions.name === name.slice(1)) {
-          result = {
-            directive,
-            options: directiveOptions
-          };
-        }
-      }
-
-      return result;
-    };
-
+    const directiveCompiler = new DirectiveCompiler(
+      this.currentCompileInfo,
+      this.componentGlobalData
+    );
     const { id, options } = this.currentCompileInfo;
 
     for (const name of Object.keys(attrs ?? {})) {
       const attrVal = attrs[name];
 
+      // parse directives
       if (name.startsWith(DIRECTIVE_PREFIX) && id && options) {
-        const result = findDirective(name);
+        const listener = directiveCompiler.compile(name, attrVal, elementID);
 
-        if (!result) {
-          throw new Error(`Cannot find the directive that name is ${name}`);
+        if (listener) {
+          this.directiveObservers.push(listener);
         }
-
-        const {
-          directive,
-          options: { valueRegex, valueType }
-        } = result;
-        const computedAttrVal = this.computeExpression(attrVal);
-
-        // validate value type by Regex
-        if (valueRegex && !valueRegex.test(computedAttrVal)) {
-          throw new Error('Cannot match the value of attribute');
-        }
-
-        // validate value type by typeof
-        if (
-          computedAttrVal === '' ||
-          (valueType &&
-            vm.runInNewContext(
-              `typeOf(${computedAttrVal}) !== "${valueType}"`,
-              {
-                typeOf
-              }
-            ))
-        ) {
-          throw new Error('Attribute type error');
-        }
-
-        // collect listeners of state
-        this.handingDirectives(elementID, name, attrVal, directive);
 
         continue;
       }
@@ -220,90 +165,6 @@ export class Compiler {
 
     return flatAttrs;
   }
-
-  private handingDirectives(
-    id: string,
-    name: string,
-    rawVal: string,
-    Directive: PropertyDirective | StructureDirective
-  ) {
-    const { id: componentID } = this.currentCompileInfo;
-    const stateNames = this.findDependencyStates(rawVal);
-    const directive = new (Directive as any)();
-    const scopeData = globalStateListeners[componentID!];
-
-    const registerStateObserver = (listener: () => void) => {
-      for (const name of stateNames) {
-        const listeners = scopeData[name];
-
-        scopeData[name] = [...(listeners ?? []), listener];
-      }
-    };
-
-    if (isPropertyDirective(directive)) {
-      const listener = () =>
-        directive.onPropertyObserve(
-          document.getElementById(id)!,
-          this.computeExpression(rawVal),
-          {
-            updateInstance: setData => {
-              Object.assign(
-                globalData[componentID!][INNER_INSTANCE_NAME] as object,
-                setData
-              );
-            },
-            computeExpression: expr => this.computeExpression(expr)
-          }
-        );
-
-      this.directiveObservers.push(listener);
-      registerStateObserver(listener);
-    }
-  }
-
-  private computeExpression(expr: string) {
-    let res: any;
-
-    try {
-      res = vm.runInNewContext(`res = ${expr}`, this.componentGlobalData);
-    } catch (e) {
-      throw new Error(`Unexpected expression: ${expr}`);
-    }
-
-    return res;
-  }
-
-  private findDependencyStates = (code: string) => {
-    const stateNames: string[] = [];
-
-    const retryInVM = (params: vm.Context) => {
-      try {
-        vm.runInNewContext(code, params);
-      } catch (e) {
-        const matches = /([^\s]+) is not defined/.exec(e.message);
-
-        // rethrow the error if occur an unexpected error
-        if (!matches) {
-          throw e;
-        }
-
-        const stateName = matches[1];
-        const stateVal = this.componentGlobalData[stateName];
-
-        if (stateVal === undefined) {
-          throw new Error(`Cannot find the variable ${stateName}`);
-        }
-
-        stateNames.push(stateName);
-
-        retryInVM({ ...params, ...{ [stateName]: stateVal } });
-      }
-    };
-
-    retryInVM({});
-
-    return stateNames;
-  };
 
   initDirectives() {
     for (const listener of this.directiveObservers) {

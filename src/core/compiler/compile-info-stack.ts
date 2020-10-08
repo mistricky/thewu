@@ -2,7 +2,7 @@ import { ComponentDecoratorOptions } from '../decorators';
 import { globalStateListeners } from '../global-data';
 import { ParsedJSXElement } from '../render';
 
-interface CompileComponentInfo {
+export interface CompileComponentInfo {
   id?: string;
   options?: ComponentDecoratorOptions;
 }
