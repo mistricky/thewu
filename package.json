@@ -9,7 +9,7 @@
   "dependencies": {
     "@types/lodash": "^4.14.123",
     "incremental-dom": "^0.7.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.21",
     "parcel-bundler": "^1.11.0",
     "shortid": "^2.2.15",
     "typescript": "^3.3.1"
