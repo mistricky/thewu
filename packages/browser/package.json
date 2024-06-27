@@ -1,17 +1,17 @@
 {
-  "name": "wu",
-  "version": "1.0.0",
+  "name": "@wu/browser",
   "private": true,
+  "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "@types/jest": "^29.5.12",
-    "ts-jest": "^29.1.5"
+  "dependencies": {
+    "@wu/core": "workspace:*",
+    "reflect-metadata": "^0.2.2"
   }
 }
