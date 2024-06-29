@@ -64,14 +64,6 @@ export const Component =
         this.onMounted?.();
       }
 
-      // renderDOM(container: HTMLElement) {
-      //   console.info("wwwww");
-      //   this.vdom = initializeNode(this.render(), container);
-      //   console.info(this.vdom);
-      //
-      //   return this.vdom;
-      // }
-
       // When the state was changed, the patch action will invoke automatically
       patch() {
         if (!this.vdom) {
@@ -81,8 +73,6 @@ export const Component =
         if (!this.renderer) {
           throw new Error("Component mount failed");
         }
-
-        console.info("patching");
 
         // Move to next tick of event loop to make sure the state always be the latest
         Promise.resolve().then(() =>

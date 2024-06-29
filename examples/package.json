@@ -10,8 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@wu/browser": "workspace:*",
-    "@wu/core": "workspace:*",
+    "@thewu/browser": "workspace:*",
+    "@thewu/core": "workspace:*",
     "parcel": "^2.12.0"
   },
   "devDependencies": {

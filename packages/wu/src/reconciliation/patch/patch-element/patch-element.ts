@@ -9,13 +9,13 @@ import { patchStyle } from "./patch-style";
 export const patchElementNode = (
   oldVDom: ParsedWuNode,
   newVDom: ParsedWuNode,
-  renderer: Renderer
+  renderer: Renderer,
 ) => {
   const { props: oldProps } = oldVDom;
   const { props: newProps } = newVDom;
 
   // oldVdom.el.className = newVdom.el.className;
-  // patchAttrs(oldVdom.el, oldProps, newProps);
+  patchAttrs(oldVDom.el as any, oldProps, newProps);
   // patchStyle(oldVdom.el, oldVdom.el.style, newVdom.el.style);
 
   // @TODO patch event listener
@@ -24,6 +24,6 @@ export const patchElementNode = (
     oldVDom.el as HTMLElement,
     oldVDom.children,
     newVDom.children,
-    renderer
+    renderer,
   );
 };

@@ -1,4 +1,4 @@
-import { Handler, Handlers, ParsedWuNode, WuNodeType } from "@wu/core";
+import { Handler, Handlers, ParsedWuNode, WuNodeType } from "@thewu/core";
 
 const removeListener = (
   el: HTMLElement | Text,

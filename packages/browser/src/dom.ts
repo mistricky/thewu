@@ -5,5 +5,4 @@ export const bind = (element: any, container: HTMLElement) => {
   const renderer = new BrowserRenderer();
 
   renderer.mount(element, container);
-  console.info(element);
 };

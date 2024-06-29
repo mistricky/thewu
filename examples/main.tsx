@@ -1,10 +1,6 @@
-import { bind } from "@wu/browser";
-import * as Wu from "@wu/core";
-import { Component, Default, Prop, Props, State } from "@wu/core";
-
-interface CounterProps {
-  initCount: number;
-}
+import { bind } from "@thewu/browser";
+import * as Wu from "@thewu/core";
+import { Component, Default, Prop, State } from "@thewu/core";
 
 @Component()
 class Counter {
@@ -12,13 +8,31 @@ class Counter {
   @Default({ prop: "initCount" })
   count!: number;
 
-  onMounted() {
-    console.info("Hello");
+  @State
+  profile: any = {};
+
+  constructor() {
+    console.info("bar construct");
+  }
+
+  async onMounted() {
+    // console.info("Bar on mounted");
+    // const response = await fetch("https://api.github.com/users/mistricky");
+    // const data = await response.json();
+    //
+    this.profile = {
+      login: "mistricky",
+      avatar_url: "https://avatars.githubusercontent.com/u/22574136?v=4",
+    };
   }
 
   render() {
+    console.info("bar rendering");
+
     return (
       <div>
+        <div>{this.profile.login}</div>
+        <img src={this.profile.avatar_url} />
         <span>{this.count}</span>
         <button
           onClick={() => {
@@ -41,11 +55,17 @@ class Foo {
   @Prop("age")
   age!: number;
 
+  constructor() {
+    console.info("foo construct");
+  }
+
   onMounted() {
-    console.info("Foo");
+    console.info("Foo mounted");
   }
 
   render(): Wu.WuNode {
+    console.info("foo rendering");
+
     return (
       <div>
         {`My name is ${this.name}, and I'm ${this.age} years old.`}

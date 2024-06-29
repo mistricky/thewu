@@ -5,7 +5,7 @@ import {
   ComponentType,
   Component,
   Renderer,
-} from "@wu/core";
+} from "@thewu/core";
 
 type RenderTarget = HTMLElement | Text;
 

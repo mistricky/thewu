@@ -1,5 +1,5 @@
 {
-  "name": "@wu/browser",
+  "name": "@thewu/browser",
   "private": true,
   "version": "1.0.0",
   "description": "",
@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@wu/core": "workspace:*",
+    "@thewu/core": "workspace:*",
     "reflect-metadata": "^0.2.2"
   }
 }

@@ -75,19 +75,18 @@ export const createElement = (
     withDefaultWuNode({ children, tag, ...node }, parsedProps);
 
   if (isClassComponent(tag)) {
-    const componentInstance = new tag({ props: parsedProps });
-    const vdom = componentInstance.render();
+    // Set instance to the class component as static property
+    // to avoid reconstruct class component instance
+    if (!tag.$instance) {
+      tag.$instance = new tag({ props: parsedProps });
+    }
 
-    console.info(
-      createWuNodeByJSXElement({
-        value: componentInstance,
-        ...vdom,
-        componentType: ComponentType.CLASS_COMPONENT,
-      }),
-    );
+    const vdom = tag.$instance.render();
+
+    console.info(vdom);
 
     return createWuNodeByJSXElement({
-      value: componentInstance,
+      value: tag.$instance,
       ...vdom,
       componentType: ComponentType.CLASS_COMPONENT,
     });

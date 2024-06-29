@@ -1,4 +1,4 @@
-import { ParsedWuNode, Renderer, WuNode, initializeNode } from "@wu/core";
+import { ParsedWuNode, Renderer, WuNode, initializeNode } from "@thewu/core";
 import { mountDOM } from "./render-to-dom";
 import { insert } from "../utils";
 
