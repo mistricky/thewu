@@ -1,15 +1,18 @@
-import { ParsedWuNode } from "../../../utils";
+import { ParsedWuNode, TransformedNode } from "../../../initialize";
+import { WuNode } from "../../../jsx";
+import { Renderer } from "../../../renderer";
 import { patchAttrs } from "./patch-attrs";
 import { patchChildren } from "./patch-children";
 import { patchStyle } from "./patch-style";
 
 // Patch something like element node not text node
 export const patchElementNode = (
-  oldVdom: ParsedWuNode<HTMLElement>,
-  newVdom: ParsedWuNode<HTMLElement>,
+  oldVDom: ParsedWuNode,
+  newVDom: ParsedWuNode,
+  renderer: Renderer
 ) => {
-  const { props: oldProps } = oldVdom;
-  const { props: newProps } = newVdom;
+  const { props: oldProps } = oldVDom;
+  const { props: newProps } = newVDom;
 
   // oldVdom.el.className = newVdom.el.className;
   // patchAttrs(oldVdom.el, oldProps, newProps);
@@ -17,5 +20,10 @@ export const patchElementNode = (
 
   // @TODO patch event listener
 
-  patchChildren(oldVdom.el, oldVdom.children, newVdom.children);
+  patchChildren(
+    oldVDom.el as HTMLElement,
+    oldVDom.children,
+    newVDom.children,
+    renderer
+  );
 };

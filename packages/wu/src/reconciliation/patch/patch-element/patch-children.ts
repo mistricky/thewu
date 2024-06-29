@@ -1,4 +1,6 @@
-import { ParsedWuNode, insert, renderToDOM } from "../../../utils";
+import { ParsedWuNode } from "../../../initialize";
+import { WuNode } from "../../../jsx";
+import { Renderer } from "../../../renderer";
 import {
   DiffSequenceResult,
   DiffSequenceResultItem,
@@ -13,32 +15,35 @@ type Actions<T> = Record<Operator, (item: DiffSequenceResultItem<T>) => void>;
 const createActions = <T extends ParsedWuNode>(
   parentEl: HTMLElement,
   oldChildren: ParsedWuNode[],
+  renderer: Renderer
 ): Actions<T> => ({
   [Operator.ADD]: ({ position, item }) =>
-    insert(renderToDOM(item), parentEl, position),
-  [Operator.REMOVE]: ({ item }) => item.el.remove(),
-  [Operator.NOPE]: ({ position, item }) => patch(oldChildren[position], item),
+    renderer.insertNode(item, parentEl, position),
+  [Operator.REMOVE]: ({ item }) => renderer.removeNode(item as ParsedWuNode),
+  [Operator.NOPE]: ({ position, item }) =>
+    patch(oldChildren[position], item, renderer),
   [Operator.MOVE]: ({ position, originPosition, item: newChild }) => {
     const oldChild = oldChildren[originPosition!];
 
-    oldChild.el.remove();
-    insert(renderToDOM(newChild), parentEl, position);
+    renderer.removeNode(oldChild);
+    renderer.insertNode(newChild, parentEl, position);
 
-    patch(oldChild, newChild);
+    patch(oldChild, newChild, renderer);
   },
 });
 
 export const patchChildren = (
   parentEl: HTMLElement,
-  oldChildren: ParsedWuNode[],
-  newChildren: ParsedWuNode[],
+  oldChildren: ParsedWuNode["children"],
+  newChildren: ParsedWuNode["children"],
+  renderer: Renderer
 ) => {
-  const actions = createActions<ParsedWuNode>(parentEl, oldChildren);
+  const actions = createActions<ParsedWuNode>(parentEl, oldChildren, renderer);
 
   for (const diffResultItem of diffSequence(
     oldChildren,
     newChildren,
-    areNodesEqual,
+    areNodesEqual
   )) {
     actions[diffResultItem.operator](diffResultItem);
   }

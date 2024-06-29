@@ -1,3 +1,5 @@
+import { WuNode } from "../../jsx";
+
 export enum Operator {
   ADD,
   REMOVE,
@@ -20,13 +22,13 @@ export type DiffSequenceResult<T> = DiffSequenceResultItem<T>[];
 const includesWithCompare = <T>(
   array: T[],
   targetItem: T,
-  compare: CompareFunction<T>,
+  compare: CompareFunction<T>
 ) => array.some((item) => compare(item, targetItem));
 
-export const diffSequence = <T>(
+export const diffSequence = <T extends WuNode>(
   oldArray: T[],
   newArray: T[],
-  compare: CompareFunction<T> = (a, b) => a === b,
+  compare: CompareFunction<T> = (a, b) => a === b
 ): DiffSequenceResult<T> => {
   let i = 0;
   let result: DiffSequenceResult<T> = [];
@@ -80,7 +82,7 @@ export const diffSequence = <T>(
       operator: Operator.REMOVE,
       position: i,
       item,
-    })),
+    }))
   );
 
   return result;

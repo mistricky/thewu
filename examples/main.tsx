@@ -1,54 +1,84 @@
+import { bind } from "@wu/browser";
 import * as Wu from "@wu/core";
-import { Component, Prop, State, bind } from "@wu/browser";
+import { Component, Default, Prop, Props, State } from "@wu/core";
+
+interface CounterProps {
+  initCount: number;
+}
 
 @Component()
-class Foo implements Component {
-  @State()
+class Counter {
+  @State
+  @Default({ prop: "initCount" })
+  count!: number;
+
+  onMounted() {
+    console.info("Hello");
+  }
+
+  render() {
+    return (
+      <div>
+        <span>{this.count}</span>
+        <button
+          onClick={() => {
+            console.info(this.count);
+            this.count++;
+          }}
+        >
+          +1
+        </button>
+      </div>
+    );
+  }
+}
+
+@Component()
+class Foo {
+  @State
   name = "foo";
 
   @Prop("age")
   age!: number;
 
-  say() {
-    console.info(`My name is ${this.name}, and I'm ${this.age} years old.`);
+  onMounted() {
+    console.info("Foo");
   }
 
   render(): Wu.WuNode {
-    return <div>Hello World</div>;
+    return (
+      <div>
+        {`My name is ${this.name}, and I'm ${this.age} years old.`}
+        <button
+          onClick={() => {
+            this.name = "bar";
+          }}
+        >
+          change
+        </button>
+        <Counter initCount={10}></Counter>
+      </div>
+    );
   }
 }
 
-// const Foo = ({ bar }: { bar: number }) => {
-//   return <input value={bar} />;
-// };
+const Bar = () => (
+  <div>
+    bar<span>bbbbb</span>
+  </div>
+);
 
-// const element = (
-//   <a>
-//     Hello<div>World</div>
-//     <Foo bar={1}></Foo>
-//     <button style={{ color: "red" }} onClick={() => alert("click")}>
-//       Click
-//     </button>
-//   </a>
-// );
-
-bind(document.querySelector("#container")!).create({
-  state: { count: 0, value: "" },
-  reducer: {
-    add: (state) => ({ ...state, count: state.count + 1 }),
-    updateValue: (state, payload) => ({ ...state, value: payload }),
-  },
-  view: (state, emit) => (
-    <div>
-      {state.count}
-      <button onClick={() => emit("add")}>+1</button>
-      {!!state.count ? <p>Hello</p> : <div>No</div>}
-      <br />
-      <input
-        value={state.value}
-        onInput={(e: any) => emit("updateValue", e.target.value)}
-      />
-      {state.value}
-    </div>
-  ),
-});
+bind(
+  <div>
+    <Bar></Bar>
+    <>
+      nnnn
+      <Foo age={10}></Foo>
+      <div a={1} onClick={() => {}}>
+        aaa
+      </div>
+      <span>aaaa</span>
+    </>
+  </div>,
+  document.querySelector("#container")!,
+);

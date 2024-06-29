@@ -46,7 +46,11 @@ importers:
         specifier: ^0.2.2
         version: 0.2.2
 
-  packages/wu: {}
+  packages/wu:
+    dependencies:
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
 
 packages:
 

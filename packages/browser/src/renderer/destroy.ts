@@ -1,4 +1,4 @@
-import { Handler, Handlers, ParsedWuNode, WuNodeType } from "../utils";
+import { Handler, Handlers, ParsedWuNode, WuNodeType } from "@wu/core";
 
 const removeListener = (
   el: HTMLElement | Text,
@@ -12,16 +12,25 @@ const removeListeners = (el: HTMLElement | Text, listeners: Handlers) => {
   });
 };
 
-// Remove DOM element from document but don't care about vdom
-export const destroy = ({ el, type, children, on }: ParsedWuNode) => {
-  el.remove();
-  removeListeners(el, on);
-
-  if (type === WuNodeType.Text) {
-    return;
-  }
-
+const destroyChildren = (children: ParsedWuNode["children"]) => {
   for (const child of children) {
     destroy(child);
   }
+};
+
+// Remove DOM element from document but don't care about vdom
+export const destroy = ({ el, type, children, on }: ParsedWuNode) => {
+  if (!el) {
+    destroyChildren(children);
+    return;
+  }
+
+  el.remove();
+  removeListeners(el, on);
+
+  if (type === WuNodeType.TEXT) {
+    return;
+  }
+
+  destroyChildren(children);
 };
