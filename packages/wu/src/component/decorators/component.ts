@@ -2,10 +2,10 @@ import "reflect-metadata";
 import { METADATA_PROP_KEY, initializeProp, initializeProps } from "./prop";
 import { METADATA_STATE_KEY } from "./state";
 import { assignDefault } from "./default";
-import { WuNode } from "../jsx";
-import { ParsedWuNode, initializeNode } from "../initialize";
-import { patch } from "../reconciliation";
-import { Renderer } from "../renderer";
+import { WuNode } from "../../jsx";
+import { ParsedWuNode, initializeNode } from "../../initialize";
+import { patch } from "../../reconciliation";
+import { Renderer } from "../../renderer";
 
 export interface Component {
   render(): WuNode;
@@ -79,8 +79,8 @@ export const Component =
           patch(
             this.vdom!,
             (this.vdom = initializeNode(this.render(), this.vdom!.parentEl)),
-            this.renderer!,
-          ),
+            this.renderer!
+          )
         );
       }
     };

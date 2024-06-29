@@ -1,4 +1,4 @@
-import { defineMetadatas } from "../utils";
+import { defineMetadatas } from "../../utils";
 
 interface DefaultParams {
   prop?: string;

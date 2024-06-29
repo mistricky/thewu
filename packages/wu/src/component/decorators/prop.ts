@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { defineMetadatas } from "../utils";
+import { defineMetadatas } from "../../utils";
 
 export const METADATA_PROP_KEY = Symbol("METADATA_PROP_KEY");
 
@@ -28,7 +28,7 @@ export const Props = (target: any, propertyKey: string) => {
 
 export const initializeProps = (
   target: any,
-  props: Record<string, unknown>,
+  props: Record<string, unknown>
 ) => {
   const propsKeys = Reflect.getMetadata(METADATA_PROPS_KEY, target) ?? [];
 
