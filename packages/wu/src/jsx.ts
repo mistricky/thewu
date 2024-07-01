@@ -30,9 +30,10 @@ declare global {
 }
 
 export enum WuNodeType {
-  NODE,
-  FRAGMENT,
-  TEXT,
+  NODE = "node",
+  FRAGMENT = "fragment",
+  TEXT = "text",
+  CONTAINER = "container",
 }
 
 export enum ComponentType {
@@ -70,6 +71,8 @@ export const createElement = (
   props?: Record<string, any>,
   ...children: JSX.Element[]
 ) => {
+  // console.info(tag, "ttttt");
+
   const parsedProps = props ?? {};
   const createWuNodeByJSXElement = (node: Partial<WuNode> | undefined = {}) =>
     withDefaultWuNode({ children, tag, ...node }, parsedProps);
@@ -81,9 +84,9 @@ export const createElement = (
       tag.$instance = new tag({ props: parsedProps });
     }
 
-    const vdom = tag.$instance.render();
+    tag.$instance.updateProps(parsedProps);
 
-    console.info(vdom);
+    const vdom = tag.$instance.render();
 
     return createWuNodeByJSXElement({
       value: tag.$instance,

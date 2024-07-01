@@ -22,13 +22,13 @@ export type DiffSequenceResult<T> = DiffSequenceResultItem<T>[];
 const includesWithCompare = <T>(
   array: T[],
   targetItem: T,
-  compare: CompareFunction<T>
+  compare: CompareFunction<T>,
 ) => array.some((item) => compare(item, targetItem));
 
-export const diffSequence = <T extends WuNode>(
+export const diffSequence = <T>(
   oldArray: T[],
   newArray: T[],
-  compare: CompareFunction<T> = (a, b) => a === b
+  compare: CompareFunction<T> = (a, b) => a === b,
 ): DiffSequenceResult<T> => {
   let i = 0;
   let result: DiffSequenceResult<T> = [];
@@ -53,7 +53,10 @@ export const diffSequence = <T extends WuNode>(
 
     // If the new item does not exists in old array, that represent the item is new,
     // should be add in the original array
-    if (newItem && !includesWithCompare(oldArray, newItem, compare)) {
+    if (
+      newArray.length !== oldArray.length ||
+      (newItem && !includesWithCompare(oldArray, newItem, compare))
+    ) {
       oldArray.splice(i, 0, newItem);
       result.push({ operator: Operator.ADD, item: newItem, position: i++ });
       continue;
@@ -82,7 +85,7 @@ export const diffSequence = <T extends WuNode>(
       operator: Operator.REMOVE,
       position: i,
       item,
-    }))
+    })),
   );
 
   return result;

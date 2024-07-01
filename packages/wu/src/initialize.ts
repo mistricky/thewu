@@ -1,11 +1,12 @@
 import { Component } from "./component";
 import { ComponentType, WuNode, WuNodeType, withDefaultWuNode } from "./jsx";
-import { isWuNode } from "./utils";
+import { isInvalidWuNode, isWuNode } from "./utils";
 
 export type ParsedWuNode = Omit<WuNode, "children" | "el"> & {
   // When the node is fragment, el is equal to undefined
   el: HTMLElement | Text | undefined;
   children: ParsedWuNode[];
+  parentNode: ParsedWuNode | undefined;
   parentEl: HTMLElement;
 };
 
@@ -30,9 +31,23 @@ export const transformNode = (
     }) as ParsedWuNode;
   }
 
+  if (Array.isArray(node)) {
+    return withDefaultWuNode<TransformedNode>({
+      type: WuNodeType.FRAGMENT,
+      children: node.map(transformNode),
+    });
+  }
+
+  if (isInvalidWuNode(node)) {
+    return withDefaultWuNode({
+      type: WuNodeType.TEXT,
+      value: JSON.stringify(node),
+    }) as ParsedWuNode;
+  }
+
   return {
     ...node,
-    children: node.children.map((child) => transformNode(child)),
+    children: node.children.map(transformNode),
   };
 };
 
@@ -40,14 +55,16 @@ export const transformNode = (
 export const parseNode = (
   node: TransformedNode,
   parentEl: HTMLElement,
+  parentNode: ParsedWuNode | undefined,
 ): ParsedWuNode => {
   const createNode = (
     el: HTMLElement | Text | undefined,
     children: ParsedWuNode[] | undefined = [],
-  ) => ({
+  ): ParsedWuNode => ({
     ...node,
     children,
     el,
+    parentNode,
     parentEl,
   });
 
@@ -56,11 +73,13 @@ export const parseNode = (
   }
 
   const el = isWuNode(node.tag) ? document.createElement(node.tag) : undefined;
-  const parsedNode = createNode(
-    el,
+  const parsedNode = createNode(el, []) as ParsedWuNode;
+  const isFragment = node.type === WuNodeType.FRAGMENT;
+
+  parsedNode.children = node.children.map((child) =>
     // If the el is undefined that indicates the node is fragment, so the parentEl of
     // children should be the same as the parentEl of the fragment node
-    node.children.map((child) => parseNode(child, el ?? parentEl)),
+    parseNode(child, el ?? parentEl, isFragment ? parentNode : parsedNode),
   );
 
   if (node.componentType === ComponentType.CLASS_COMPONENT) {
@@ -70,5 +89,14 @@ export const parseNode = (
   return parsedNode;
 };
 
-export const initializeNode = (node: WuNode, parentEl: HTMLElement) =>
-  parseNode(transformNode(node), parentEl);
+export const initializeNode = (
+  node: WuNode,
+  parentEl: HTMLElement,
+  parentNode: ParsedWuNode | undefined,
+) => {
+  const a = parseNode(transformNode(node), parentEl, parentNode);
+
+  return a;
+
+  // return parseNode(transformNode(node), parentEl, parentNode);
+};

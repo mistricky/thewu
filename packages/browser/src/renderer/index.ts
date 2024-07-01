@@ -1,5 +1,11 @@
-import { ParsedWuNode, Renderer, WuNode, initializeNode } from "@thewu/core";
-import { mountDOM } from "./render-to-dom";
+import {
+  ParsedWuNode,
+  Renderer,
+  WuNode,
+  initializeNode,
+  withDefaultWuNode,
+} from "@thewu/core";
+import { mountDOM, renderToDOM } from "./render-to-dom";
 import { insert } from "../utils";
 
 export * from "./destroy";
@@ -14,7 +20,7 @@ export class BrowserRenderer implements Renderer {
     container: HTMLElement,
     position?: number | undefined,
   ): void {
-    insert(node.el!, container, position);
+    insert(renderToDOM(node, this) as any, container, position);
   }
 
   updateTextNodeContent(oldVDom: ParsedWuNode, newVDom: ParsedWuNode): void {
@@ -28,7 +34,7 @@ export class BrowserRenderer implements Renderer {
   }
 
   mount(node: WuNode, container: HTMLElement) {
-    mountDOM(container, initializeNode(node, container), this);
+    mountDOM(container, initializeNode(node, container, undefined), this);
   }
 }
 

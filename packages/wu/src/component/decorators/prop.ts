@@ -12,7 +12,7 @@ export const Prop =
     });
   };
 
-export const initializeProp = (target: any, props: Record<string, unknown>) => {
+export const setProp = (target: any, props: Record<string, unknown>) => {
   const propMetadatas = Reflect.getMetadata(METADATA_PROP_KEY, target) ?? [];
 
   for (const { propertyKey, propName } of propMetadatas) {
@@ -26,10 +26,7 @@ export const Props = (target: any, propertyKey: string) => {
   defineMetadatas(METADATA_PROPS_KEY, target, propertyKey);
 };
 
-export const initializeProps = (
-  target: any,
-  props: Record<string, unknown>
-) => {
+export const setProps = (target: any, props: Record<string, unknown>) => {
   const propsKeys = Reflect.getMetadata(METADATA_PROPS_KEY, target) ?? [];
 
   for (const propertyKey of propsKeys) {

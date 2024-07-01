@@ -1,8 +1,8 @@
 import "reflect-metadata";
-import { METADATA_PROP_KEY, initializeProp, initializeProps } from "./prop";
+import { METADATA_PROP_KEY, setProp, setProps } from "./prop";
 import { METADATA_STATE_KEY } from "./state";
 import { assignDefault } from "./default";
-import { WuNode } from "../../jsx";
+import { WuNode, WuNodeProps } from "../../jsx";
 import { ParsedWuNode, initializeNode } from "../../initialize";
 import { patch } from "../../reconciliation";
 import { Renderer } from "../../renderer";
@@ -27,17 +27,21 @@ export const Component =
       props: Props = {};
       vdom: ParsedWuNode | undefined;
       renderer: Renderer | undefined;
+      proxyInstance: any;
 
       constructor(...args: any[]) {
         super(...args);
 
         const [{ props }] = args as [ComponentParams];
 
-        initializeProps(this, props);
-        initializeProp(this, props);
+        setProps(this, props);
+        setProp(this, props);
         assignDefault(this, props);
 
-        return new Proxy(this, {
+        this.proxyInstance = new Proxy(this, {
+          get: (target, propertyKey, receiver) => {
+            return Reflect.get(target, propertyKey);
+          },
           set: (target, propertyKey, value, receiver) => {
             // If the propertyKey is state
             if (Reflect.hasMetadata(METADATA_STATE_KEY, target, propertyKey)) {
@@ -49,19 +53,38 @@ export const Component =
               throw new Error("The prop is readonly.");
             }
 
-            return Reflect.set(target, propertyKey, value, receiver);
+            if (propertyKey === "$props") {
+              setProps(this, value);
+              setProp(this, value);
+            }
+
+            return Reflect.set(this, propertyKey, value, receiver);
           },
         });
+
+        return this.proxyInstance;
       }
 
       init(vdom: ParsedWuNode) {
-        this.vdom = vdom;
+        if (!this.vdom) {
+          this.vdom = vdom;
+        }
+
         this.onInit?.();
+      }
+
+      // Init props and prop when rendering and constructing
+      updateProps(props: WuNodeProps) {
+        this.$props = props;
       }
 
       mount(renderer: Renderer) {
         this.renderer = renderer;
         this.onMounted?.();
+      }
+
+      render() {
+        return super.render.bind(this.proxyInstance)();
       }
 
       // When the state was changed, the patch action will invoke automatically
@@ -74,13 +97,15 @@ export const Component =
           throw new Error("Component mount failed");
         }
 
+        let a = this.vdom!;
+
         // Move to next tick of event loop to make sure the state always be the latest
-        Promise.resolve().then(() =>
-          patch(
-            this.vdom!,
-            (this.vdom = initializeNode(this.render(), this.vdom!.parentEl)),
-            this.renderer!
-          )
-        );
+        Promise.resolve().then(() => {
+          this.vdom = initializeNode(this.render(), a!.parentEl, a?.parentNode);
+
+          console.info(this.vdom);
+
+          patch(a, this.vdom!, this.renderer!);
+        });
       }
     };

@@ -1,4 +1,5 @@
 import { Component } from "../component";
+import { WuNode } from "../jsx";
 
 interface Stringable {
   toString(): string;
@@ -16,6 +17,9 @@ export const isWuNode = (tag: Tag): tag is string => typeof tag === "string";
 
 export const isFunctionComponent = (tag: Tag): tag is Function =>
   typeof tag === "function";
+
+export const isInvalidWuNode = (target: WuNode) =>
+  !target.tag && !target.children && !target.type;
 
 export const isClassComponent = (
   tag: Tag,

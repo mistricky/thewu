@@ -1,9 +1,9 @@
 import {
+  diffSequence,
   DiffSequenceResult,
   DiffSequenceResultItem,
   Operator,
-  diffSequence,
-} from "../../../src/reconciliation";
+} from "@thewu/core";
 
 type Actions<T> = Record<Operator, (item: DiffSequenceResultItem<T>) => void>;
 

@@ -1,4 +1,4 @@
-export const insert = (
+export const insert = async (
   el: HTMLElement | Text,
   container: HTMLElement,
   position?: number,
@@ -13,12 +13,12 @@ export const insert = (
     throw new Error("The position must be positive integer");
   }
 
-  const { childNodes } = container;
+  const { children } = container;
 
-  if (position >= childNodes.length) {
+  if (position >= children.length) {
     container.appendChild(el);
     return;
   }
 
-  container.insertBefore(el, childNodes[position]);
+  container.insertBefore(el, children[position]);
 };

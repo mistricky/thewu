@@ -1,6 +1,7 @@
 import { bind } from "@thewu/browser";
 import * as Wu from "@thewu/core";
 import { Component, Default, Prop, State } from "@thewu/core";
+import { App } from "./app";
 
 @Component()
 class Counter {
@@ -68,7 +69,7 @@ class Foo {
 
     return (
       <div>
-        {`My name is ${this.name}, and I'm ${this.age} years old.`}
+        <span class="text-4">{`My name is ${this.name}, and I'm ${this.age} years old.`}</span>
         <button
           onClick={() => {
             this.name = "bar";
@@ -89,16 +90,8 @@ const Bar = () => (
 );
 
 bind(
-  <div>
-    <Bar></Bar>
-    <>
-      nnnn
-      <Foo age={10}></Foo>
-      <div a={1} onClick={() => {}}>
-        aaa
-      </div>
-      <span>aaaa</span>
-    </>
-  </div>,
+  <>
+    <App></App>
+  </>,
   document.querySelector("#container")!,
 );

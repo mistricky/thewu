@@ -10,7 +10,7 @@ const isTextNode = (vdom: ParsedWuNode) => vdom.type === WuNodeType.TEXT;
 export const patch = (
   oldVDom: ParsedWuNode,
   newVDom: ParsedWuNode,
-  renderer: Renderer
+  renderer: Renderer,
 ) => {
   // If two nodes of vdom are not equal, we destroy original node and
   // create new node to replace it
@@ -33,7 +33,7 @@ export const patch = (
       oldVDom.parentEl,
       oldVDom.children,
       newVDom.children,
-      renderer
+      renderer,
     );
   }
 
