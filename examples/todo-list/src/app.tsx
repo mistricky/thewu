@@ -8,10 +8,10 @@ export class App {
   @State
   tasks: Task[] = [];
 
-  finishTask(name: string) {
-    this.tasks = this.tasks.map((task) => ({
+  toggleTaskDoneState(targetIndex: number) {
+    this.tasks = this.tasks.map((task, index) => ({
       ...task,
-      isDone: task.name === name,
+      isDone: targetIndex === index ? !task.isDone : task.isDone,
     }));
   }
 
@@ -20,15 +20,21 @@ export class App {
       <div class="prose w-[384px] mx-[auto] mt-8">
         <div class="flex justify-between items-start w-full">
           <h1>The Wu Tasks</h1>
-          <button class="mt-2 text-primary">Clear all</button>
+          <button class="mt-2 text-primary" onClick={() => (this.tasks = [])}>
+            Clear all
+          </button>
         </div>
         <div class="mb-8">
-          {this.tasks.map((targetTask) => (
-            <TaskItem
-              onClick={() => this.finishTask(targetTask.name)}
-              task={targetTask}
-            />
-          ))}
+          {this.tasks.length ? (
+            this.tasks.map((targetTask, index) => (
+              <TaskItem
+                onClick={() => this.toggleTaskDoneState(index)}
+                task={targetTask}
+              />
+            ))
+          ) : (
+            <div>No tasks found</div>
+          )}
         </div>
         <AddTask
           onTaskAdd={(task) => {

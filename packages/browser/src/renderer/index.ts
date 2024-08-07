@@ -20,6 +20,8 @@ export class BrowserRenderer implements Renderer {
     container: HTMLElement,
     position?: number | undefined,
   ): void {
+    console.info(renderToDOM(node, this), container, "nnnnnn");
+
     insert(renderToDOM(node, this) as any, container, position);
   }
 
@@ -30,6 +32,7 @@ export class BrowserRenderer implements Renderer {
   }
 
   replaceWith(oldVDom: ParsedWuNode, newVDom: ParsedWuNode): void {
+    console.info("wwwwwwww");
     oldVDom.el!.replaceWith(newVDom.el!);
   }
 

@@ -10,6 +10,10 @@ export const patchAttrs = (
 
   for (const key of added.concat(updated)) {
     el.setAttribute(key.toString(), newAttrs[key]);
+
+    if (key === "value") {
+      (el as any)[key] = newAttrs[key];
+    }
   }
 
   for (const key of removed) {

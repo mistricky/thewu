@@ -1,12 +1,8 @@
 import { ParsedWuNode } from "../../../initialize";
-import { WuNode } from "../../../jsx";
+import { WuNodeType } from "../../../jsx";
 import { Renderer } from "../../../renderer";
-import {
-  DiffSequenceResult,
-  DiffSequenceResultItem,
-  Operator,
-  diffSequence,
-} from "../../diff";
+import { applyWithFragmentType, updateParentEl } from "../../../utils";
+import { DiffSequenceResultItem, Operator, diffSequence } from "../../diff";
 import { areNodesEqual } from "../equal";
 import { patch } from "../patch";
 
@@ -18,16 +14,16 @@ const createActions = <T extends ParsedWuNode>(
   renderer: Renderer,
 ): Actions<T> => ({
   [Operator.ADD]: ({ position, item }) => {
-    item.parentNode!.el = parentEl;
-    item.parentEl = parentEl;
+    const insertNode = applyWithFragmentType(renderer.insertNode);
 
-    renderer.insertNode(item, parentEl, position);
-
-    // if (item.parentNode?.el) {
-    //   item.parentNode.el = oldChildren[position].parentEl;
-    // }
+    updateParentEl(item, parentEl);
+    insertNode(item, parentEl, position);
   },
-  [Operator.REMOVE]: ({ item }) => renderer.removeNode(item as ParsedWuNode),
+  [Operator.REMOVE]: ({ item }) => {
+    const removeNode = applyWithFragmentType(renderer.removeNode);
+
+    removeNode(item);
+  },
   [Operator.NOPE]: ({ position, item }) => {
     item.el = oldChildren[position].el;
     item.parentEl = oldChildren[position].parentEl;

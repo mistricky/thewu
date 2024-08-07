@@ -89,9 +89,4 @@ const Bar = () => (
   </div>
 );
 
-bind(
-  <>
-    <App></App>
-  </>,
-  document.querySelector("#container")!,
-);
+bind(<App></App>, document.querySelector("#container")!);

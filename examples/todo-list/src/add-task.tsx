@@ -11,7 +11,13 @@ export class AddTask {
   content = "";
 
   handleAddTaskButtonClick() {
+    if (this.content === "") {
+      alert("Please type something");
+      return;
+    }
+
     this.onTaskAdd({ name: this.content, isDone: false });
+    this.content = "";
   }
 
   render() {

@@ -21,7 +21,10 @@ export const areNodesEqual = <T extends WuNode>(oldNode: T, newNode: T) => {
   }
 
   // If the node is element node with different type, just return false
-  if (oldNode.tag === newNode.tag) {
+  // There may some edge cases, if the old node is fragment but the new node is not,
+  // which means the tag of the old node is undefined, so we should check the tag to make
+  // sure the tags not be undefined before comparing
+  if (!!oldNode.tag && !!newNode.tag && oldNode.tag === newNode.tag) {
     return true;
   }
 

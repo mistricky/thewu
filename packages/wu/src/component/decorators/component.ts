@@ -39,10 +39,11 @@ export const Component =
         assignDefault(this, props);
 
         this.proxyInstance = new Proxy(this, {
-          get: (target, propertyKey, receiver) => {
-            return Reflect.get(target, propertyKey);
-          },
           set: (target, propertyKey, value, receiver) => {
+            console.info(
+              `The state was changed: ${propertyKey.toString()} with value: ${value?.toString()}`,
+            );
+
             // If the propertyKey is state
             if (Reflect.hasMetadata(METADATA_STATE_KEY, target, propertyKey)) {
               this.patch();
@@ -99,11 +100,11 @@ export const Component =
 
         let a = this.vdom!;
 
+        console.info("Patching...");
+
         // Move to next tick of event loop to make sure the state always be the latest
         Promise.resolve().then(() => {
           this.vdom = initializeNode(this.render(), a!.parentEl, a?.parentNode);
-
-          console.info(this.vdom);
 
           patch(a, this.vdom!, this.renderer!);
         });
