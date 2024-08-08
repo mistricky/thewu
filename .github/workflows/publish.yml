@@ -55,6 +55,10 @@ jobs:
           git pull --rebase
           git push
 
+      - name: Publish workspace packages
+        working-directory: scripts
+        run: deno task publish
+
       - name: Bump version and push tag
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.1
@@ -66,5 +70,5 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
-          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          name: ${{ steps.tag_version.outputs.new_tag }}
           generateReleaseNotes: true
