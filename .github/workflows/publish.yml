@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    paths: package.json
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "21"
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install pnpm dependencies
+        run: pnpm install
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Sync version
+        working-directory: scripts
+        run: deno task sync-version
+
+      - name: Read workspace package.json
+        id: package
+        uses: jaywcjlove/github-action-package@main
+
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v7
+        with:
+          message: "[Release] ${{ steps.package.outputs.version }}"
+          pull_strategy: "NO-PULL"
+          push: false
+
+      - name: Push changes
+        run: |
+          git pull --rebase
+          git push
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_tag: ${{ steps.package.outputs.version }}
+
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          generateReleaseNotes: true
