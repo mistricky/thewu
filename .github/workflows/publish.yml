@@ -1,8 +1,13 @@
 name: Release
 
+# on:
+#   push:
+#     paths: package.json
+#     branches:
+#       - main
+
 on:
   push:
-    paths: package.json
     branches:
       - main
 
