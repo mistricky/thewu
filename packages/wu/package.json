@@ -1,13 +1,17 @@
 {
   "name": "@thewu/core",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
-    "dev": "tsc -w"
+    "dev": "tsc -w",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
+  "files": [
+    "dist"
+  ],
   "license": "ISC",
   "dependencies": {
     "reflect-metadata": "^0.2.2"

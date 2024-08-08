@@ -56,11 +56,14 @@ jobs:
           git pull --rebase
           git push
 
+      - name: Build packages
+        run: pnpm run build
+
       - name: Publish workspace packages
         working-directory: scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: deno task publish
+        run: pnpm run publish:workspace
 
       - name: Bump version and push tag
         id: tag_version
