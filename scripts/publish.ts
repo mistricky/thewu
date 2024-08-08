@@ -10,7 +10,6 @@ const publish = async (path: string) => {
 
   if (stderr.length) {
     console.log(decoder.decode(stderr));
-    Deno.exit(1);
   }
 
   console.log(decoder.decode(stdout));
