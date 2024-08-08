@@ -63,7 +63,7 @@ jobs:
         working-directory: scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm run publish:workspace
+        run: pnpm run publish:packages
 
       - name: Bump version and push tag
         id: tag_version
