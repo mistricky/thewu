@@ -1,0 +1,21 @@
+{
+  "name": "wu-template",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@thewu/core": "latest",
+    "@thewu/browser": "latest",
+    "@thewu/jsx": "latest"
+  },
+  "dependencies": {
+    "solid-js": "^1.8.11"
+  }
+}
