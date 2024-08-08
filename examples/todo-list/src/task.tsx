@@ -1,5 +1,4 @@
-import { Component, Prop, State } from "@thewu/core";
-import * as Wu from "@thewu/core";
+import { Component, Prop } from "@thewu/core";
 
 export interface Task {
   name: string;

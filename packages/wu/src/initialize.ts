@@ -39,9 +39,10 @@ export const transformNode = (
   }
 
   if (isInvalidWuNode(node)) {
+    console.info(node);
     return withDefaultWuNode({
       type: WuNodeType.TEXT,
-      value: JSON.stringify(node),
+      value: "Invalid Node",
     }) as ParsedWuNode;
   }
 
@@ -83,7 +84,7 @@ export const parseNode = (
   );
 
   if (node.componentType === ComponentType.CLASS_COMPONENT) {
-    (node.value as Component).init(parsedNode);
+    (node.value as Component).initVdom(parsedNode);
   }
 
   return parsedNode;
@@ -93,10 +94,4 @@ export const initializeNode = (
   node: WuNode,
   parentEl: HTMLElement,
   parentNode: ParsedWuNode | undefined,
-) => {
-  const a = parseNode(transformNode(node), parentEl, parentNode);
-
-  return a;
-
-  // return parseNode(transformNode(node), parentEl, parentNode);
-};
+) => parseNode(transformNode(node), parentEl, parentNode);

@@ -1,6 +1,5 @@
 import { bind } from "@thewu/browser";
-import * as Wu from "@thewu/core";
-import { Component, Default, Prop, State } from "@thewu/core";
+import { Component, Default, Prop, State, WuNode } from "@thewu/core";
 import { App } from "./app";
 
 @Component()
@@ -64,7 +63,7 @@ class Foo {
     console.info("Foo mounted");
   }
 
-  render(): Wu.WuNode {
+  render(): WuNode {
     console.info("foo rendering");
 
     return (

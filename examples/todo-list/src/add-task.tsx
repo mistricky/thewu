@@ -1,5 +1,4 @@
 import { Component, Prop, State } from "@thewu/core";
-import * as Wu from "@thewu/core";
 import type { Task } from "./task";
 
 @Component()

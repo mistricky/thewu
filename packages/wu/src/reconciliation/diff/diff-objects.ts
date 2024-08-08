@@ -1,19 +1,17 @@
-interface ObjectDiffResult {
-  added: Key[];
-  removed: Key[];
-  updated: Key[];
+interface ObjectDiffResult<T> {
+  added: T[];
+  removed: T[];
+  updated: T[];
 }
-
-type Key = string | number;
 
 // Objects diff algorithm can tell the renderer
 // what attribute changed
 // what attribute removed
 // what attribute added
 export const diffObjects = (
-  oldObj: object,
-  newObj: object,
-): ObjectDiffResult => {
+  oldObj: Record<string, unknown>,
+  newObj: Record<string, unknown>,
+): ObjectDiffResult<string> => {
   const newKeys = Object.keys(newObj);
   const oldKeys = Object.keys(oldObj);
 

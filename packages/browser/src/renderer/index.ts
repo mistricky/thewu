@@ -1,9 +1,11 @@
 import {
+  Component,
+  ComponentType,
   ParsedWuNode,
   Renderer,
   WuNode,
+  getDestroyLifeCycleHookName,
   initializeNode,
-  withDefaultWuNode,
 } from "@thewu/core";
 import { mountDOM, renderToDOM } from "./render-to-dom";
 import { insert } from "../utils";
@@ -11,8 +13,15 @@ import { insert } from "../utils";
 export * from "./destroy";
 
 export class BrowserRenderer implements Renderer {
-  removeNode(node: ParsedWuNode): void {
-    node.el!.remove();
+  removeNode({ componentType, el, value }: ParsedWuNode): void {
+    if (componentType === ComponentType.CLASS_COMPONENT) {
+      const instance = value as Component;
+
+      // Trigger onDestroy life cycle hook
+      instance[getDestroyLifeCycleHookName(instance)]?.();
+    }
+
+    el!.remove();
   }
 
   insertNode(

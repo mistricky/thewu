@@ -1,5 +1,5 @@
 {
-  "name": "ToDoList",
+  "name": "fetch",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,8 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@thewu/browser": "workspace:*",
-    "@thewu/core": "workspace:*",
-    "@thewu/jsx": "workspace:*"
+    "@thewu/core": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.13",

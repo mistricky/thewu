@@ -5,6 +5,7 @@ import {
   ComponentType,
   Component,
   Renderer,
+  getMountedLifeCycleHookName,
 } from "@thewu/core";
 
 type RenderTarget = HTMLElement | Text;
@@ -70,9 +71,12 @@ export const renderToDOM = (
     mountDOM(el as HTMLElement, child, renderer);
   }
 
-  // Trigger onMounted life-cycle hook
   if (componentType === ComponentType.CLASS_COMPONENT) {
-    (value as Component).mount(renderer);
+    const instance = value as Component;
+
+    instance.setRenderer(renderer);
+    // Trigger onMounted life cycle hook
+    instance[getMountedLifeCycleHookName(instance)]?.();
   }
 
   return el!;

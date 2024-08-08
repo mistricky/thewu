@@ -1,7 +1,18 @@
-import * as Wu from "@thewu/core";
-import { Component, State } from "@thewu/core";
+import { Component, State, LifeCycle } from "@thewu/core";
 import { AddTask } from "./add-task";
 import { Task, TaskItem } from "./task";
+
+@Component()
+export class Placeholder {
+  @LifeCycle.onDestroy
+  destroy() {
+    console.info("Placeholder destroying...");
+  }
+
+  render() {
+    return <div>No task found</div>;
+  }
+}
 
 @Component()
 export class App {
@@ -33,12 +44,12 @@ export class App {
               />
             ))
           ) : (
-            <div>No tasks found</div>
+            <Placeholder></Placeholder>
           )}
         </div>
         <AddTask
           onTaskAdd={(task) => {
-            this.tasks = this.tasks.concat(task);
+            this.tasks.push(task);
           }}
         />
       </div>
