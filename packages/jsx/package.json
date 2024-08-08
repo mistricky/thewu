@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsc -w",
+    "build": "tsc"
   },
   "exports": {
     "./jsx-runtime": "./dist/main.js",
@@ -13,6 +14,9 @@
   "dependencies": {
     "@thewu/core": "workspace:*"
   },
+  "files": [
+    "dist"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC"

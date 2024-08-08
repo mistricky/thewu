@@ -4,10 +4,14 @@
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
-    "dev": "tsc -w"
+    "dev": "tsc -w",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
+  "files": [
+    "dist"
+  ],
   "license": "ISC",
   "dependencies": {
     "reflect-metadata": "^0.2.2"
