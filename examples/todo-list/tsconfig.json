@@ -4,8 +4,6 @@
     "jsx": "react-jsx",                                
     "experimentalDecorators": true,                   
     "emitDecoratorMetadata": true,                    
-    // "jsxFactory": "Wu.createElement",                                 
-    // "jsxFragmentFactory": "Wu.createFragment",                         
     "jsxImportSource": "@thewu/jsx",
     "module": "commonjs",                                
     "rootDir": "./src",                                  
