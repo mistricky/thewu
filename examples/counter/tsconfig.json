@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "es2016",                                  
+    "jsx": "react-jsx",                                
+    "experimentalDecorators": true,                   
+    "jsxImportSource": "@thewu/jsx",
+    "module": "commonjs",                                
+    "rootDir": "./src",                                  
+    "moduleResolution": "nodenext",                       
+    "outDir": "./dist",                                   
+    "esModuleInterop": true,                             
+    "forceConsistentCasingInFileNames": true,            
+    "noImplicitAny": false,                            
+    "skipLibCheck": true,
+  },
+  "includes": ["src/**/*"]
+}

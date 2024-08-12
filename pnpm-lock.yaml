@@ -15,6 +15,18 @@ importers:
         specifier: ^29.1.5
         version: 29.1.5(@babel/core@7.24.7)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.24.7))(jest@29.7.0(@types/node@20.14.9))(typescript@5.4.5)
 
+  examples/counter:
+    dependencies:
+      '@thewu/browser':
+        specifier: workspace:*
+        version: link:../../packages/browser
+      '@thewu/core':
+        specifier: workspace:*
+        version: link:../../packages/wu
+      '@thewu/jsx':
+        specifier: workspace:*
+        version: link:../../packages/jsx
+
   examples/fetch:
     dependencies:
       '@thewu/browser':
