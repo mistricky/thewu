@@ -13,8 +13,8 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@thewu/core": "^0.0.4",
-    "@thewu/browser": "^0.0.4",
-    "@thewu/jsx": "^0.0.4"
+    "@thewu/core": "^0.0.6",
+    "@thewu/browser": "^0.0.6",
+    "@thewu/jsx": "^0.0.6"
   }
 }
