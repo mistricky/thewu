@@ -1,7 +1,6 @@
 {
   "tasks": {
-    "sync-version": "deno run --allow-read --allow-write sync-version.ts",
-    "publish": "deno run --allow-run --allow-read publish.ts"
+    "sync-version": "deno run --allow-read --allow-write sync-version.ts"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1"
