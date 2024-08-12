@@ -3,7 +3,6 @@
     "target": "es2016",                                  
     "jsx": "react-jsx",                                
     "experimentalDecorators": true,                   
-    "emitDecoratorMetadata": true,                    
     "jsxImportSource": "@thewu/jsx",
     "module": "commonjs",                                
     "rootDir": "./src",                                  

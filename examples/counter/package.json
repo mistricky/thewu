@@ -1,0 +1,17 @@
+{
+  "name": "counter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "vite"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@thewu/browser": "workspace:*",
+    "@thewu/core": "workspace:*",
+    "@thewu/jsx": "workspace:*"
+  }
+}
