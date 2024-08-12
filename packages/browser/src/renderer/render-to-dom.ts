@@ -53,6 +53,14 @@ export const renderToDOM = (
   { el, type, children, props, on, value, componentType }: ParsedWuNode,
   renderer: Renderer,
 ): RenderTarget | RenderTarget[] => {
+  if (componentType === ComponentType.CLASS_COMPONENT) {
+    const instance = value as Component;
+
+    instance.setRenderer(renderer);
+    // Trigger onMounted life cycle hook
+    instance[getMountedLifeCycleHookName(instance)]?.();
+  }
+
   if (type === WuNodeType.TEXT) {
     return el!;
   }
@@ -69,14 +77,6 @@ export const renderToDOM = (
 
   for (const child of children) {
     mountDOM(el as HTMLElement, child, renderer);
-  }
-
-  if (componentType === ComponentType.CLASS_COMPONENT) {
-    const instance = value as Component;
-
-    instance.setRenderer(renderer);
-    // Trigger onMounted life cycle hook
-    instance[getMountedLifeCycleHookName(instance)]?.();
   }
 
   return el!;
