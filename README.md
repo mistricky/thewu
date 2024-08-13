@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/mistricky/thewu/blob/63fc3cf9a8fea1c9bf5236c896f47722a61b64e6/docs/logo.svg" alt="Follow" width="100">
+<img src="https://github.com/mistricky/thewu/blob/899b36b6fae7d88f815cf7478749534bc6a5783a/docs/logo.svg" alt="Wu logo" width="100">
 </p>
 <h1 align="center">雾(wu)</h1>
 
