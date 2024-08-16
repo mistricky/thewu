@@ -39,10 +39,9 @@ export const transformNode = (
   }
 
   if (isInvalidWuNode(node)) {
-    console.info(node);
     return withDefaultWuNode({
       type: WuNodeType.TEXT,
-      value: "Invalid Node",
+      value: Object.prototype.toString.call(node),
     }) as ParsedWuNode;
   }
 
