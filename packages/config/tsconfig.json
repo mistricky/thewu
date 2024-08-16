@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es2016",                                  
+    "jsx": "react-jsx",                                
+    "experimentalDecorators": true,                   
+    "jsxImportSource": "@thewu/jsx",
+    "module": "commonjs",                                
+    "moduleResolution": "nodenext",
+    "esModuleInterop": true,                             
+    "forceConsistentCasingInFileNames": true,            
+    "noImplicitAny": false,                            
+    "skipLibCheck": true,
+  },
+}
