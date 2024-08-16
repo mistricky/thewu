@@ -1,0 +1,9 @@
+{
+  "name": "@thewu/config",
+  "version": "0.0.6",
+  "description": "",
+  "main": "./tsconfig.json",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
