@@ -3,14 +3,14 @@ import { Component, Default, State } from "@thewu/core";
 
 @Component()
 class Counter {
+  // @Default({ prop: "initCount" })
   @State
-  @Default({ prop: "initCount" })
-  count!: number;
+  count: number = 1;
 
   render() {
     return (
       <div>
-        <p>{this.count}</p>
+        <p>{`Hello ${this.count}`}</p>
         <button onClick={() => this.count++}>+1</button>
       </div>
     );

@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "build": "pnpm --filter './packages/**' build",
+    "dev": "pnpm --filter './packages/**' -r --parallel dev",
     "publish:packages": "pnpm --filter './packages/**' publish --access public"
   },
   "keywords": [],

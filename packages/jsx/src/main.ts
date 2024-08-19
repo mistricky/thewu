@@ -3,7 +3,6 @@ import {
   ComponentType,
   isClassComponent,
   isFunctionComponent,
-  separateHandlersAndProps,
   Tag,
   withDefaultWuNode,
   WuNode,
@@ -20,9 +19,6 @@ const createElement = (tag: Tag, props?: Record<string, any>) => {
 
   if (isClassComponent(tag)) {
     const instance = tag.createInstance({ props: parsedProps });
-
-    instance.updateProps(parsedProps);
-
     const vdom = instance.render();
 
     return createWuNodeByJSXElement({

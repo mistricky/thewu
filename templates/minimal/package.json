@@ -13,8 +13,9 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@thewu/core": "^0.0.6",
-    "@thewu/browser": "^0.0.6",
-    "@thewu/jsx": "^0.0.6"
+    "@thewu/core": "^0.0.7",
+    "@thewu/browser": "^0.0.7",
+    "@thewu/jsx": "^0.0.7",
+    "@thewu/config": "^0.0.7"
   }
 }

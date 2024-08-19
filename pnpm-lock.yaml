@@ -22,7 +22,7 @@ importers:
         version: link:../../packages/browser
       '@thewu/core':
         specifier: workspace:*
-        version: link:../../packages/wu
+        version: link:../../packages/core
       '@thewu/jsx':
         specifier: workspace:*
         version: link:../../packages/jsx
@@ -34,7 +34,7 @@ importers:
         version: link:../../packages/browser
       '@thewu/core':
         specifier: workspace:*
-        version: link:../../packages/wu
+        version: link:../../packages/core
     devDependencies:
       '@tailwindcss/typography':
         specifier: ^0.5.13
@@ -62,7 +62,7 @@ importers:
         version: link:../../packages/browser
       '@thewu/core':
         specifier: workspace:*
-        version: link:../../packages/wu
+        version: link:../../packages/core
       '@thewu/jsx':
         specifier: workspace:*
         version: link:../../packages/jsx
@@ -90,7 +90,7 @@ importers:
     dependencies:
       '@thewu/core':
         specifier: workspace:*
-        version: link:../wu
+        version: link:../core
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -104,17 +104,22 @@ importers:
 
   packages/config: {}
 
+  packages/core:
+    dependencies:
+      '@thewu/wux':
+        specifier: workspace:*
+        version: link:../wux
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+
   packages/jsx:
     dependencies:
       '@thewu/core':
         specifier: workspace:*
-        version: link:../wu
+        version: link:../core
 
-  packages/wu:
-    dependencies:
-      reflect-metadata:
-        specifier: ^0.2.2
-        version: 0.2.2
+  packages/wux: {}
 
 packages:
 
