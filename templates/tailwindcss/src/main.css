@@ -1,0 +1,18 @@
+@import url("https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&family=Tilt+Neon&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body,
+  html {
+    margin: 0;
+  }
+
+  h1 {
+    font-size: 30px;
+    margin: 21.44px 0 21.44px 12px;
+    line-height: normal;
+  }
+}

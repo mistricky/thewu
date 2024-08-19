@@ -1,0 +1,24 @@
+{
+  "name": "wu-template",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@thewu/core": "^0.0.7",
+    "@thewu/browser": "^0.0.7",
+    "@thewu/jsx": "^0.0.7",
+    "@thewu/config": "^0.0.7"
+  }
+}
