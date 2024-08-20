@@ -1,4 +1,4 @@
-import { diffObjects } from "../../../src/reconciliation";
+import { diffObjects } from "@thewu/core";
 
 describe("Diff two objects", () => {
   it("Should return correct added keys between two objects", () => {
