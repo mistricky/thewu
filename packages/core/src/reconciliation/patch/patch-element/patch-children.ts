@@ -1,5 +1,4 @@
 import { ParsedWuNode } from "../../../initialize";
-import { WuNodeType } from "../../../jsx";
 import { Renderer } from "../../../renderer";
 import { applyWithFragmentType, updateParentEl } from "../../../utils";
 import { DiffSequenceResultItem, Operator, diffSequence } from "../../diff";

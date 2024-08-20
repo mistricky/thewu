@@ -36,7 +36,7 @@ export class BrowserRenderer implements Renderer {
   }
 
   updateTextNodeContent(oldVDom: ParsedWuNode, newVDom: ParsedWuNode): void {
-    console.info("[Action] remove node", oldVDom, newVDom);
+    console.info("[Action] update Text node", oldVDom, newVDom);
 
     if (oldVDom.value !== newVDom.value) {
       oldVDom.el!.textContent = (newVDom.value as string | undefined) ?? null;
@@ -44,7 +44,7 @@ export class BrowserRenderer implements Renderer {
   }
 
   replaceWith(oldVDom: ParsedWuNode, newVDom: ParsedWuNode): void {
-    console.info("[Action] remove node", oldVDom, newVDom);
+    console.info("[Action] replaceWith", oldVDom, newVDom);
 
     oldVDom.el!.replaceWith(newVDom.el!);
   }
