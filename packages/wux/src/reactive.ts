@@ -1,14 +1,21 @@
-import { dependenceManager, ObserverId } from "./dependence-manager";
+import {
+  dependenceManager,
+  DependenceManager,
+  ObserverId,
+} from "./dependence-manager";
+import { WithDependenceManager } from "./global";
+import { getDependenceManagerFromOptions } from "./utils";
 
-interface ReactiveOptions {
+export interface ReactiveOptions {
   recursion?: boolean;
   observerId?: ObserverId;
 }
 
 export const reactive = <T extends object>(
   target: T,
-  options?: ReactiveOptions,
+  options?: WithDependenceManager<ReactiveOptions>,
 ): T => {
+  const dependenceManager = getDependenceManagerFromOptions(options);
   const id = options?.observerId ?? dependenceManager.nextId;
   const reactiveValue = new Proxy(target, {
     set(target, key, value, receiver) {
@@ -21,15 +28,17 @@ export const reactive = <T extends object>(
       }
 
       if (!isArrayLengthModifyAction) {
-        dependenceManager.trigger(id);
+        dependenceManager.trigger(id, key.toString(), value);
       }
 
       return true;
     },
     get(target, key, receiver) {
-      dependenceManager.collect(id);
+      const value = Reflect.get(target, key, receiver);
 
-      return Reflect.get(target, key, receiver);
+      dependenceManager.collect(id, key.toString(), value);
+
+      return value;
     },
   });
 
@@ -61,11 +70,19 @@ const makeRecursionReactiveValue = <T extends object>(
   return reactive(value, { observerId });
 };
 
-export const createReactiveFactory = () => {
-  const observerId = dependenceManager.nextId;
+export const createReactiveFactory = (
+  targetDependenceManager?: DependenceManager,
+) => {
+  const parsedDependenceManager = targetDependenceManager ?? dependenceManager;
+  const observerId = parsedDependenceManager.nextId;
 
   return <T extends object>(
     target: T,
     options?: Omit<ReactiveOptions, "observerId">,
-  ) => reactive(target, { ...options, observerId });
+  ) =>
+    reactive(target, {
+      ...options,
+      observerId,
+      dependenceManager: parsedDependenceManager,
+    });
 };

@@ -1,14 +1,25 @@
+export type State = {
+  stateName: string;
+  stateValue: unknown;
+};
+
+export type WatcherWithState = {
+  watcher: Watcher;
+} & State;
 export type Watcher = () => void;
 
 export type ObserverId = string;
 
 type Store = {
-  [K in ObserverId]?: Watcher[];
+  [K in ObserverId]?: WatcherWithState[];
 };
+
+type States = Record<string, unknown>;
 
 export class DependenceManager {
   private watchers: Watcher[] = [];
   private store: Store = {};
+  private _states: States = {};
 
   get nextId(): ObserverId {
     const id = `$wux_${Object.keys(this.store).length}`;
@@ -18,25 +29,48 @@ export class DependenceManager {
     return id;
   }
 
-  collect(id: ObserverId) {
+  get states() {
+    return this._states;
+  }
+
+  collect(id: ObserverId, stateName: string, stateValue: unknown) {
     if (!this.watchers.length) {
       return;
     }
 
-    this.store[id] = (this.store[id] ?? []).concat(this.watchers);
-    this.watchers = [];
+    const watchers = this.watchers.map<WatcherWithState>((watcher) => ({
+      watcher,
+      stateName,
+      stateValue,
+    }));
+
+    this._states[stateName] = stateValue;
+    this.store[id] = (this.store[id] ?? []).concat(watchers);
   }
 
-  trigger(id: ObserverId) {
-    console.info(
-      id,
-      this.store[id]?.map((fn) => fn.toString()),
-    );
-    this.store[id]?.forEach((watcher) => watcher());
+  trigger(id: ObserverId, stateName: string, stateValue: unknown) {
+    this._states[stateName] = stateValue;
+
+    for (const watcherWithState of this.store[id] ?? []) {
+      if (watcherWithState.stateName === stateName) {
+        watcherWithState.watcher();
+      }
+    }
+
+    this.clearStates();
   }
 
   addWatcher(watcher: Watcher) {
     this.watchers.push(watcher);
+  }
+
+  clearStates() {
+    this._states = {};
+  }
+
+  clearWatchers() {
+    this.watchers = [];
+    this.clearStates();
   }
 }
 
