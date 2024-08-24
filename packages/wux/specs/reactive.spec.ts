@@ -1,7 +1,7 @@
 import { dependenceManager } from "../src/dependence-manager";
 import { reactive } from "../src/reactive";
 
-describe("reactive function", () => {
+describe("Reactive function", () => {
   it("should create a reactive object without options", () => {
     const obj = { a: 1 };
     const reactiveObj = reactive(obj);
