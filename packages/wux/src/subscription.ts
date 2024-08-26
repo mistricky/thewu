@@ -29,6 +29,7 @@ const withPreviousValue = <R, T>(fn: (param?: T) => R) => {
   };
 };
 
+// Same as subscribe but it will call the reactFunction only if the return value of computedFunction has changed
 export const stream = <R>(
   computedFunction: () => R,
   reactFunction: (params: R) => void,
@@ -40,24 +41,14 @@ export const stream = <R>(
   dependenceManager.addWatcher(() => {
     const { previousValue, currentValue } = computedFunctionWithPreviousValue();
 
-    // console.info(
-    //   previousValue,
-    //   currentValue,
-    //   previousValue === currentValue,
-    //   "pppppppp",
-    // );
-    // if (previousValue === currentValue) {
-    //   return;
-    // }
+    if (previousValue === currentValue) {
+      return;
+    }
 
     reactFunction(currentValue);
   });
 
   computedFunctionWithPreviousValue();
-};
 
-export const watch = (reactiveValues: unknown[], reactFunction: () => void) => {
-  return stream(() => {
-    const values = reactiveValues.map((value) => value);
-  }, reactFunction);
+  dependenceManager.clearWatchers();
 };

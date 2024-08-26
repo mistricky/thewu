@@ -14,7 +14,7 @@ type Store = {
   [K in ObserverId]?: WatcherWithState[];
 };
 
-type States = Record<string, unknown>;
+export type States = Record<string, unknown>;
 
 export class DependenceManager {
   private watchers: Watcher[] = [];
@@ -48,11 +48,16 @@ export class DependenceManager {
     this.store[id] = (this.store[id] ?? []).concat(watchers);
   }
 
-  trigger(id: ObserverId, stateName: string, stateValue: unknown) {
+  trigger(
+    id: ObserverId,
+    stateName: string,
+    stateValue: unknown,
+    triggerStateName?: string,
+  ) {
     this._states[stateName] = stateValue;
 
     for (const watcherWithState of this.store[id] ?? []) {
-      if (watcherWithState.stateName === stateName) {
+      if ([stateName, triggerStateName].includes(watcherWithState.stateName)) {
         watcherWithState.watcher();
       }
     }

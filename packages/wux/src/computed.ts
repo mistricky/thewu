@@ -1,3 +1,4 @@
+import { States } from "./dependence-manager";
 import { WithDependenceManager } from "./global";
 import { getDependenceManagerFromOptions, isEmptyObject } from "./utils";
 
@@ -7,12 +8,12 @@ export type WrappedValue<T> = {
 
 export const computed = <T>(
   computedFunction: () => T,
-  options?: WithDependenceManager<{}>
+  options?: WithDependenceManager<{}>,
 ): WrappedValue<T> => {
   const dependenceManager = getDependenceManagerFromOptions(options);
   const wrappedValue: WrappedValue<() => T> = { value: computedFunction };
-  let states = {};
-  let previousData = undefined;
+  let states: States = {};
+  let previousData: T | undefined = undefined;
 
   return new Proxy(wrappedValue, {
     get(target, key, receiver) {
@@ -24,7 +25,7 @@ export const computed = <T>(
           const result = Object.keys(dependenceManager.states).reduce(
             (result, key) =>
               states[key] === dependenceManager.states[key] && result,
-            true
+            true,
           );
 
           if (result) {

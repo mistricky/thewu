@@ -8,6 +8,7 @@ import { getDependenceManagerFromOptions } from "./utils";
 
 export interface ReactiveOptions {
   recursion?: boolean;
+  triggerStateName?: string;
   observerId?: ObserverId;
 }
 
@@ -19,7 +20,11 @@ export const reactive = <T extends object>(
   const id = options?.observerId ?? dependenceManager.nextId;
   const reactiveValue = new Proxy(target, {
     set(target, key, value, receiver) {
-      const setResult = Reflect.set(target, key, value, receiver);
+      const parsedValue =
+        isObject(value) || Array.isArray(value)
+          ? reactive(value, options)
+          : value;
+      const setResult = Reflect.set(target, key, parsedValue, receiver);
       const isArrayLengthModifyAction =
         Array.isArray(target) && key === "length";
 
@@ -28,7 +33,12 @@ export const reactive = <T extends object>(
       }
 
       if (!isArrayLengthModifyAction) {
-        dependenceManager.trigger(id, key.toString(), value);
+        dependenceManager.trigger(
+          id,
+          key.toString(),
+          value,
+          options?.triggerStateName,
+        );
       }
 
       return true;
@@ -43,7 +53,7 @@ export const reactive = <T extends object>(
   });
 
   return options?.recursion
-    ? makeRecursionReactiveValue(target, id)
+    ? makeRecursionReactiveValue(target, id, options?.triggerStateName)
     : reactiveValue;
 };
 
@@ -53,6 +63,7 @@ const isObject = (obj: unknown): obj is Record<string, unknown> =>
 const makeRecursionReactiveValue = <T extends object>(
   target: T,
   observerId?: ObserverId,
+  triggerStateName?: string,
 ): T => {
   const value = !isObject(target)
     ? target
@@ -62,12 +73,12 @@ const makeRecursionReactiveValue = <T extends object>(
 
         return Object.assign(target, {
           [key]: isArrayOrObject
-            ? makeRecursionReactiveValue(value, observerId)
+            ? makeRecursionReactiveValue(value, observerId, triggerStateName)
             : target,
         });
       }, target);
 
-  return reactive(value, { observerId });
+  return reactive(value, { observerId, triggerStateName });
 };
 
 export const createReactiveFactory = (

@@ -1,4 +1,4 @@
-import { reactive, subscribe } from "..";
+import { reactive, subscribe } from "../src";
 
 describe("Subscribe function", () => {
   it("Should call the watcher function once when call subscribe function immediately", () => {
@@ -49,6 +49,17 @@ describe("Subscribe function", () => {
     subscribe(watcher);
 
     foo.bar = 1;
+
+    expect(watcher).toHaveBeenCalledTimes(2);
+  });
+
+  it("should", () => {
+    const obj = reactive({ a: { b: 1 } }, { recursion: true });
+    const watcher = jest.fn(() => obj.a.b);
+
+    subscribe(watcher);
+
+    obj.a.b = 2;
 
     expect(watcher).toHaveBeenCalledTimes(2);
   });
