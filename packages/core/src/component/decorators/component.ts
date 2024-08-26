@@ -6,7 +6,7 @@ import { WuNode, WuNodeProps } from "../../jsx";
 import { ParsedWuNode, initializeNode } from "../../initialize";
 import { patch } from "../../reconciliation";
 import { Renderer } from "../../renderer";
-import { stream, subscribe } from "@thewu/wux";
+import { stream, subscribe, watch } from "@thewu/wux";
 
 export interface Component {
   render(): WuNode;
@@ -56,10 +56,8 @@ export const Component =
         // When states was changed, trigger patch method
         (Reflect.getMetadata(METADATA_STATE_KEY, this) ?? []).forEach(
           (stateName: string) => {
-            stream(
-              () => {
-                return JSON.stringify(this[stateName]);
-              },
+            watch(
+              () => [this[stateName]],
               () => {
                 this.patch();
               },
@@ -92,8 +90,6 @@ export const Component =
         if (!this.renderer) {
           throw new Error("Component mount failed");
         }
-
-        console.info("Patching...");
 
         // Move to next tick of event loop to make sure the state always be the latest
         Promise.resolve().then(() => {

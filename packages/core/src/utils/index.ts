@@ -3,3 +3,4 @@ export * from "./event-loop";
 export * from "./props";
 export * from "./metadata";
 export * from "./vdom";
+export * from "./event";

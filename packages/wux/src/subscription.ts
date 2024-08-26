@@ -1,6 +1,7 @@
 import { Watcher } from "./dependence-manager";
 import { WithDependenceManager } from "./global";
 import { getDependenceManagerFromOptions } from "./utils";
+import { isEqual, cloneDeep } from "lodash";
 
 export const subscribe = (
   watcher: Watcher,
@@ -20,7 +21,7 @@ const withPreviousValue = <R, T>(fn: (param?: T) => R) => {
     const currentValue = fn(param);
     const parsedPreviousValue = previousValue ?? currentValue;
 
-    previousValue = currentValue;
+    previousValue = cloneDeep(currentValue);
 
     return {
       previousValue: parsedPreviousValue,
@@ -29,19 +30,26 @@ const withPreviousValue = <R, T>(fn: (param?: T) => R) => {
   };
 };
 
+interface StreamOptions<R> {
+  // Compare the previous value with the current value, if it returns true
+  // the reactFunction will not be called
+  compare?: (a: R, b: R) => boolean;
+}
+
 // Same as subscribe but it will call the reactFunction only if the return value of computedFunction has changed
 export const stream = <R>(
   computedFunction: () => R,
   reactFunction: (params: R) => void,
-  options?: WithDependenceManager<{}>,
+  options?: WithDependenceManager<StreamOptions<R>>,
 ) => {
   const dependenceManager = getDependenceManagerFromOptions(options);
   const computedFunctionWithPreviousValue = withPreviousValue(computedFunction);
+  const compare = options?.compare ?? ((a: R, b: R) => a === b);
 
   dependenceManager.addWatcher(() => {
     const { previousValue, currentValue } = computedFunctionWithPreviousValue();
 
-    if (previousValue === currentValue) {
+    if (compare(previousValue, currentValue)) {
       return;
     }
 
@@ -52,3 +60,13 @@ export const stream = <R>(
 
   dependenceManager.clearWatchers();
 };
+
+export const watch = (
+  lazyStates: () => unknown[],
+  reactFunction: () => void,
+  options?: WithDependenceManager<{}>,
+) =>
+  stream(lazyStates, reactFunction, {
+    ...options,
+    compare: (a, b) => isEqual(a, b),
+  });

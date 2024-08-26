@@ -16,7 +16,7 @@ export class AddTask {
     }
 
     this.onTaskAdd({ name: this.content, isDone: false });
-    // this.content = "";
+    this.content = "";
   }
 
   render() {
@@ -30,10 +30,7 @@ export class AddTask {
           class="input input-bordered input-md w-full max-w-xs mr-2"
         />
         <button
-          onClick={() => {
-            console.info("aaaaa");
-            this.handleAddTaskButtonClick();
-          }}
+          onClick={() => this.handleAddTaskButtonClick()}
           class="btn btn-primary text-white"
         >
           Add

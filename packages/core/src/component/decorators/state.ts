@@ -20,7 +20,9 @@ export const State = (target: any, propertyKey: string): any => {
       if (isObject(value) || Array.isArray(value)) {
         reactiveProperty.value = reactive(value, {
           recursion: true,
+          triggerStateName: "value",
         });
+
         return true;
       }
 

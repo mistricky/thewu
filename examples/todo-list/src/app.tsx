@@ -20,10 +20,9 @@ export class App {
   tasks: Task[] = [];
 
   toggleTaskDoneState(targetIndex: number) {
-    this.tasks = this.tasks.map((task, index) => ({
-      ...task,
-      isDone: targetIndex === index ? !task.isDone : task.isDone,
-    }));
+    const targetTask = this.tasks[targetIndex];
+
+    targetTask.isDone = !targetTask.isDone;
   }
 
   render() {

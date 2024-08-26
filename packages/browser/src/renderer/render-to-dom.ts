@@ -6,6 +6,7 @@ import {
   Component,
   Renderer,
   getMountedLifeCycleHookName,
+  setEventListener,
 } from "@thewu/core";
 
 type RenderTarget = HTMLElement | Text;
@@ -71,8 +72,8 @@ export const renderToDOM = (
 
   attachAttribute(props, el as HTMLElement);
 
-  for (const name of Object.keys(on)) {
-    el!.addEventListener(name, on[name] as any);
+  for (const eventName of Object.keys(on)) {
+    setEventListener(el, eventName, on[eventName]);
   }
 
   for (const child of children) {
