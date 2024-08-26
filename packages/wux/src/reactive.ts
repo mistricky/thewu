@@ -8,7 +8,18 @@ import { getDependenceManagerFromOptions } from "./utils";
 
 export interface ReactiveOptions {
   recursion?: boolean;
+  // Assume that you have a reactive(with recursion optoion) value {v: []}.
+  // When you set v to a new array, the v is not reactive anymore, so we need to
+  // make the new array reactive, and trigger the original subscribed watchers when
+  // the new array is modified.
+  // The Dependence Manager trigger wachers by the name of the state, thus the original
+  // available state name is 'v', set the `triggerStateName` to `v` to trigger these watchers
   triggerStateName?: string;
+  // Dependence Manager organize watchers like:
+  // {[id: ObserverId]: WatcherWithState[]}
+  // If you want to trigger watchers, you need provide stateName and observerId to
+  // Dependence Manager, so it can find the watchers to trigger.
+  // Typically you don't need to provide observerId manually, use `createReactiveFactory` instead.
   observerId?: ObserverId;
 }
 
