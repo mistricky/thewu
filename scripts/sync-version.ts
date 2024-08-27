@@ -2,12 +2,7 @@
 // Please make sure you have modified the version in the workspace package.json before running this script
 
 import { join } from "jsr:@std/path";
-
-const withConfigPath = (path: string) => join(path, "package.json");
-const readPkgConfig = async (path: string) =>
-  JSON.parse(await Deno.readTextFile(withConfigPath(path)));
-const writePkgConfig = (path: string, config: Record<string, unknown>) =>
-  Deno.writeTextFile(withConfigPath(path), JSON.stringify(config, null, 2));
+import { readPkgConfig, writePkgConfig } from "./common.ts";
 
 // Read workspace package.json version
 const { version } = await readPkgConfig("..");
