@@ -1,0 +1,10 @@
+{
+  "extends": "@thewu/config",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+  },
+  "includes": [
+    "src/**/*"
+  ]
+}

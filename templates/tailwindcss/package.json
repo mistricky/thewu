@@ -13,12 +13,12 @@
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "@thewu/config": "^0.0.8"
   },
   "dependencies": {
-    "@thewu/core": "^0.0.7",
-    "@thewu/browser": "^0.0.7",
-    "@thewu/jsx": "^0.0.7",
-    "@thewu/config": "^0.0.7"
+    "@thewu/core": "^0.0.8",
+    "@thewu/browser": "^0.0.8",
+    "@thewu/jsx": "^0.0.8"
   }
 }
