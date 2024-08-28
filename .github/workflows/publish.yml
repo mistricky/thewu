@@ -78,3 +78,7 @@ jobs:
           tag: ${{ steps.tag_version.outputs.new_tag }}
           name: ${{ steps.tag_version.outputs.new_tag }}
           generateReleaseNotes: true
+      
+      - name: Update templates @thewu dependencies version
+        working-directory: scripts
+        run: deno task sync-templates-version
